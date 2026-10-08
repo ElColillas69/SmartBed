@@ -1,0 +1,88 @@
+-- =====================================================================
+-- smartBed database schema (PostgreSQL)
+--
+-- Runs the same on a Raspberry Pi, a laptop or AWS,
+-- as long as PostgreSQL is installed there.
+--
+-- "Devices" covers both sensors (things that measure, e.g. a weight pad)
+-- and actuators (things the bed does, e.g. the heater).
+--
+-- Adding a new kind of device needs NO change to the tables:
+--   INSERT INTO measurement_types (name, unit, value_kind) VALUES ('noise', 'dB', 'number');
+-- =====================================================================
+
+DROP TABLE IF EXISTS readings, devices, measurement_types, beds, users CASCADE;
+
+-- ---------------------------------------------------------------------
+-- users: people who log in to the web dashboard / phone view
+-- ---------------------------------------------------------------------
+CREATE TABLE users (
+    user_id        SERIAL        PRIMARY KEY,
+    email          VARCHAR(255)  NOT NULL UNIQUE,
+    password_hash  VARCHAR(255)  NOT NULL,
+    display_name   VARCHAR(100) NOT NULL,
+    created_at     TIMESTAMPTZ   NOT NULL DEFAULT now()
+);
+
+-- ---------------------------------------------------------------------
+-- beds: each physical smartBed, owned by one user
+-- ---------------------------------------------------------------------
+CREATE TABLE beds (
+    bed_id      SERIAL        PRIMARY KEY,
+    user_id     INT           NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    name        VARCHAR(100)  NOT NULL DEFAULT 'My bed',
+    created_at  TIMESTAMPTZ   NOT NULL DEFAULT now()
+);
+
+-- ---------------------------------------------------------------------
+-- measurement_types: the list of KINDS of value we record
+-- (weight, temperature, ..., heater state)
+-- New kinds are added here as rows, not as new columns.
+-- value_kind tells the app how to show the value:
+--   'number' -> show value + unit      (e.g. 21.5 °C)
+--   'on_off' -> 1 = on / 0 = off       (e.g. heating)
+-- ---------------------------------------------------------------------
+CREATE TABLE measurement_types (
+    measurement_type_id  SERIAL       PRIMARY KEY,
+    name                 VARCHAR(50)  NOT NULL UNIQUE,
+    unit                 VARCHAR(20),
+    value_kind           VARCHAR(10)  NOT NULL DEFAULT 'number'
+                         CHECK (value_kind IN ('number', 'on_off'))
+);
+
+-- ---------------------------------------------------------------------
+-- devices: one actual sensor or actuator fitted to one bed
+-- (a bed can have two of the same type, e.g. two weight pads)
+-- ---------------------------------------------------------------------
+CREATE TABLE devices (
+    device_id            SERIAL        PRIMARY KEY,
+    bed_id               INT           NOT NULL REFERENCES beds(bed_id) ON DELETE CASCADE,
+    measurement_type_id  INT           NOT NULL REFERENCES measurement_types(measurement_type_id),
+    label                VARCHAR(100),                   -- e.g. 'Left side weight pad'
+    is_active            BOOLEAN       NOT NULL DEFAULT TRUE,
+    installed_at         TIMESTAMPTZ   NOT NULL DEFAULT now()
+);
+
+-- ---------------------------------------------------------------------
+-- readings: every value a device reports, with the time it was taken
+-- ---------------------------------------------------------------------
+CREATE TABLE readings (
+    reading_id   BIGSERIAL      PRIMARY KEY,
+    device_id    INT            NOT NULL REFERENCES devices(device_id) ON DELETE CASCADE,
+    value        NUMERIC(10,2)  NOT NULL,
+    recorded_at  TIMESTAMPTZ    NOT NULL DEFAULT now()
+);
+
+-- Makes "latest readings for this device" queries fast
+CREATE INDEX idx_readings_device_time ON readings (device_id, recorded_at DESC);
+
+
+-- =====================================================================
+-- Starting measurement types (add more any time)
+-- =====================================================================
+INSERT INTO measurement_types (name, unit, value_kind) VALUES
+    ('weight',      'kg',  'number'),   -- used to tell if someone is in bed, might need a default value
+    ('temperature', '°C',  'number'),
+    ('humidity',    '%',   'number'),
+    ('light',       'lux', 'number'),
+    ('heating',     NULL,  'on_off');   -- heater state (actuator, not a sensor)

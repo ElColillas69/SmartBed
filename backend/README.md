@@ -5,12 +5,11 @@ Prototype API aligned with SmartBed's pitch-deck hardware: **Raspberry Pi Zero W
 ## 1. Install and run (Windows PowerShell)
 
 ```powershell
-cd smartbed-api
+cd backend
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 Copy-Item .env.example .env
-# Edit .env and set API_KEY to a unique secret
 python run.py
 ```
 

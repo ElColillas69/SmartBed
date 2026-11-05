@@ -77,3 +77,11 @@ class DHT22Sensor:
 
     def close(self):
         self.sensor._pi.stop()
+        
+if __name__ == "__main__":
+    sensor = DHT22Sensor()
+
+    try:
+        print("DHT22 reading:", sensor.read())
+    finally:
+        sensor.close()

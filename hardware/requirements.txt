@@ -1,1 +1,3 @@
 adafruit-circuitpython-dht==4.0.12
+pigpio==1.78
+pigpio-dht==0.3.6

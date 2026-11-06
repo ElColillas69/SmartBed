@@ -37,6 +37,7 @@ Invoke-RestMethod http://localhost:5000/api/device/commands -Headers $headers
 | POST | `/api/readings` | Ingest new sensor data (can be used as simulator or secure integration endpoint) |
 | GET | `/api/readings/latest` | Latest reading |
 | GET | `/api/readings?limit=50` | Reading history |
+| GET | `/api/readings?minutes=480&limit=500` | Readings from the last N minutes, thinned evenly to at most `limit` (newest always kept) |
 | GET | `/api/preferences` | Current settings |
 | PATCH | `/api/preferences` | Update heating enabled, target temperature, light warning threshold |
 | GET | `/api/alarms` | List alarms |
@@ -46,6 +47,7 @@ Invoke-RestMethod http://localhost:5000/api/device/commands -Headers $headers
 | POST | `/api/alarms/<id>/snooze` | Snooze alarm |
 | POST | `/api/alarms/<id>/dismiss` | Dismiss alarm for current local day |
 | GET | `/api/device/commands` | Pi polls for heating LED, light warning and buzzer commands |
+| GET | `/api/sleep/nights?days=7` | One summary per night (noon to noon, local time): bedtime, wake, minutes in bed, bed exits, average temperature |
 
 All endpoints except `/api/health` require the `X-API-Key` header. Sensor fields are `occupied` (boolean), `temperature_c` (number), `humidity_percent` (number) and `light_level` (integer 0–1023). For example, an FSR402 raw reading must first be converted by the Pi into occupancy using a calibrated threshold.
 
@@ -55,15 +57,24 @@ Heating simulation is ON if heating is enabled, the bed is occupied and measured
 
 The Flask ingest endpoint is the **HTTP-facing bridge contract**, not a completed PubNub subscription. Raspberry Pi firmware should publish JSON with the four sensor fields on a PubNub channel (e.g., `smartbed.readings`). The PubNub integration worker, to be added once publish/subscribe keys and channel are agreed, should validate/forward received messages to `POST /api/readings` with its backend API key. Do not publish the backend API key in PubNub messages or client JavaScript. Until then, POST sample readings directly to simulate the hardware.
 
-The physical Pi should periodically GET `/api/device/commands` and control the buzzer/LED on its own GPIO pins. For reliable scheduled alarms, leave the Pi polling continuously. In this starter the buzzer remains requested for a due alarm until its dismissal or snooze; **automatic timeout is not implemented yet**. Daylight saving follows `BED_TIMEZONE`, and real deployments must handle connectivity and clock issues. Do not rely on this prototype for critical care or safety.
+The physical Pi should periodically GET `/api/device/commands` and control the buzzer/LED on its own GPIO pins. For reliable scheduled alarms, leave the Pi polling continuously. A due alarm keeps the buzzer requested until it is dismissed or snoozed, or for 30 minutes if nobody answers, so a Pi that polls less than once a minute still hears it. Daylight saving follows `BED_TIMEZONE`, and real deployments must handle connectivity and clock issues. Do not rely on this prototype for critical care or safety.
 
-## 5. Testing
+## 5. Demo data and Pi simulator
+
+```bash
+python seed_demo.py
+python simulate.py
+```
+
+The React dashboard in `../frontend` reads all of this; see its README.
+
+## 6. Testing
 
 ```bash
 pytest -q
 ```
 
-## 6. Important production TODOs
+## 7. Important production TODOs
 
 - Implement the PubNub subscriber/bridge and reconnect/replay handling.
 - Add **real user accounts, caregiver roles, authorisation and audit logs**. A shared API key alone must not be exposed in a public frontend.

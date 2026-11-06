@@ -1,5 +1,7 @@
 """SmartBed backend application factory."""
 import os
+import hmac
+import math
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 from functools import wraps
@@ -13,6 +15,13 @@ from sqlalchemy import desc
 db = SQLAlchemy()
 
 
+def utc(value):
+    """SQLite drops timezone info; stored values are always UTC."""
+    if value is not None and value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value
+
+
 class Reading(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     recorded_at = db.Column(db.DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
@@ -24,7 +33,7 @@ class Reading(db.Model):
     light_warning = db.Column(db.Boolean, nullable=False)
 
     def as_dict(self):
-        return {"id": self.id, "recorded_at": self.recorded_at.isoformat(),
+        return {"id": self.id, "recorded_at": utc(self.recorded_at).isoformat(),
                 "occupied": self.occupied, "temperature_c": self.temperature_c,
                 "humidity_percent": self.humidity_percent, "light_level": self.light_level,
                 "heating_led_on": self.heating_led_on, "light_warning": self.light_warning}
@@ -54,14 +63,13 @@ class Alarm(db.Model):
     def as_dict(self):
         return {"id": self.id, "time": self.time, "label": self.label,
                 "enabled": self.enabled, "snooze_minutes": self.snooze_minutes,
-                "snoozed_until": self.snoozed_until.isoformat() if self.snoozed_until else None}
+                "snoozed_until": utc(self.snoozed_until).isoformat() if self.snoozed_until else None}
 
 
 def key_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         expected = current_app.config["API_KEY"]
-        import hmac
         provided = request.headers.get("X-API-Key", "")
         if not expected or not hmac.compare_digest(provided, expected):
             return jsonify(error="Valid X-API-Key required"), 401
@@ -100,6 +108,10 @@ def time_string(value):
     return value
 
 
+def newest_first(query):
+    return query.order_by(desc(Reading.recorded_at), desc(Reading.id))
+
+
 def create_app(config=None):
     from dotenv import load_dotenv
     load_dotenv()
@@ -132,7 +144,7 @@ def create_app(config=None):
     @app.get("/api/readings/latest")
     @key_required
     def latest():
-        reading = db.session.query(Reading).order_by(desc(Reading.id)).first()
+        reading = newest_first(db.session.query(Reading)).first()
         return jsonify(reading.as_dict() if reading else None)
 
     @app.get("/api/readings")
@@ -144,30 +156,54 @@ def create_app(config=None):
             raise ValueError("limit must be an integer")
         if not 1 <= limit <= 500:
             raise ValueError("limit must be between 1 and 500")
-        result = db.session.query(Reading).order_by(desc(Reading.id)).limit(limit).all()
-        return jsonify([r.as_dict() for r in result])
+        query = newest_first(db.session.query(Reading))
+        if "minutes" not in request.args:
+            return jsonify([r.as_dict() for r in query.limit(limit).all()])
+        try:
+            minutes = int(request.args["minutes"])
+        except ValueError:
+            raise ValueError("minutes must be an integer")
+        if not 1 <= minutes <= 1440:
+            raise ValueError("minutes must be between 1 and 1440")
+        since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
+        rows = query.filter(Reading.recorded_at >= since).all()
+        step = max(1, math.ceil(len(rows) / limit))
+        rows = rows[::step] or query.limit(1).all()
+        return jsonify([r.as_dict() for r in rows])
 
     @app.post("/api/readings")
     @key_required
     def ingest():
         data = json_object()
-        # In hardware, the Pi maps FSR readings to a boolean occupied value.
         occupied = boolean(data.get("occupied"), "occupied")
         temperature = number(data.get("temperature_c"), "temperature_c", -20, 60)
         humidity = number(data.get("humidity_percent"), "humidity_percent", 0, 100)
         raw_light = data.get("light_level")
         if isinstance(raw_light, bool) or not isinstance(raw_light, int) or not 0 <= raw_light <= 1023:
             raise ValueError("light_level must be an integer between 0 and 1023")
-        pref = db.session.get(Preference, 1)
-        heating = pref.heating_enabled and occupied and temperature < pref.target_temperature_c
-        light_warning = raw_light > pref.light_warning_threshold
+        heating, light_warning = decide(db.session.get(Preference, 1), occupied, temperature, raw_light)
         reading = Reading(occupied=occupied, temperature_c=temperature,
                           humidity_percent=humidity, light_level=raw_light,
                           heating_led_on=heating, light_warning=light_warning)
         db.session.add(reading)
         db.session.commit()
-        # Raspberry Pi should poll or consume this decision and set LED accordingly.
         return jsonify(reading.as_dict()), 201
+
+    @app.get("/api/sleep/nights")
+    @key_required
+    def sleep_nights():
+        """Summarise each night (noon to noon, local time) from occupancy readings."""
+        try:
+            days = int(request.args.get("days", 7))
+        except ValueError:
+            raise ValueError("days must be an integer")
+        if not 1 <= days <= 31:
+            raise ValueError("days must be between 1 and 31")
+        tz = ZoneInfo(app.config["BED_TIMEZONE"])
+        since = datetime.now(timezone.utc) - timedelta(days=days + 1)
+        rows = (db.session.query(Reading).filter(Reading.recorded_at >= since)
+                .order_by(Reading.recorded_at).all())
+        return jsonify(summarise_nights(rows, tz)[:days])
 
     @app.get("/api/preferences")
     @key_required
@@ -194,6 +230,10 @@ def create_app(config=None):
         db.session.commit()
         return jsonify(pref.as_dict())
 
+    def mark_handled(alarm):
+        local_now = datetime.now(ZoneInfo(app.config["BED_TIMEZONE"]))
+        alarm.last_triggered_date = latest_occurrence(alarm.time, local_now).date().isoformat()
+
     @app.get("/api/alarms")
     @key_required
     def alarms():
@@ -206,6 +246,7 @@ def create_app(config=None):
         alarm = Alarm(time=time_string(data.get("time")), label=alarm_label(data.get("label", "Wake up")),
                       enabled=boolean(data.get("enabled", True), "enabled"),
                       snooze_minutes=snooze_duration(data.get("snooze_minutes", 5)))
+        mark_handled(alarm)
         db.session.add(alarm)
         db.session.commit()
         return jsonify(alarm.as_dict()), 201
@@ -219,11 +260,14 @@ def create_app(config=None):
             raise ValueError("Unknown alarm field")
         if "time" in data:
             alarm.time = time_string(data["time"])
-            alarm.last_triggered_date = None
+            mark_handled(alarm)
         if "label" in data:
             alarm.label = alarm_label(data["label"])
         if "enabled" in data:
-            alarm.enabled = boolean(data["enabled"], "enabled")
+            enabled = boolean(data["enabled"], "enabled")
+            if enabled and not alarm.enabled:
+                mark_handled(alarm)
+            alarm.enabled = enabled
         if "snooze_minutes" in data:
             alarm.snooze_minutes = snooze_duration(data["snooze_minutes"])
         db.session.commit()
@@ -249,8 +293,7 @@ def create_app(config=None):
     @key_required
     def dismiss_alarm(alarm_id):
         alarm = db.get_or_404(Alarm, alarm_id)
-        local_now = datetime.now(ZoneInfo(app.config["BED_TIMEZONE"]))
-        alarm.last_triggered_date = local_now.date().isoformat()
+        mark_handled(alarm)
         alarm.snoozed_until = None
         db.session.commit()
         return jsonify(alarm.as_dict())
@@ -258,29 +301,78 @@ def create_app(config=None):
     @app.get("/api/device/commands")
     @key_required
     def commands():
-        """Pi polls this endpoint to actuate its LED and buzzer locally.
-
-        Starter does not independently run a background scheduler. The Pi must poll.
-        """
         now = datetime.now(timezone.utc)
         local_now = now.astimezone(ZoneInfo(app.config["BED_TIMEZONE"]))
-        date = local_now.date().isoformat()
-        minute = local_now.strftime("%H:%M")
-        due = []
-        for alarm in db.session.query(Alarm).filter_by(enabled=True).all():
-            snoozed = alarm.snoozed_until
-            if snoozed and snoozed.tzinfo is None:
-                snoozed = snoozed.replace(tzinfo=timezone.utc)
-            if snoozed and now >= snoozed:
-                due.append(alarm.id)
-            elif not snoozed and alarm.time == minute and alarm.last_triggered_date != date:
-                due.append(alarm.id)
-        last = db.session.query(Reading).order_by(desc(Reading.id)).first()
-        return jsonify(heating_led_on=last.heating_led_on if last else False,
-                       light_warning=last.light_warning if last else False,
+        due = [alarm.id for alarm in db.session.query(Alarm).filter_by(enabled=True).all()
+               if alarm_ringing(alarm, local_now)]
+        last = newest_first(db.session.query(Reading)).first()
+        # Re-evaluate against current preferences so a settings change takes
+        # effect immediately, not only when the next reading arrives.
+        heating, light_warning = (decide(db.session.get(Preference, 1), last.occupied,
+                                         last.temperature_c, last.light_level) if last else (False, False))
+        return jsonify(heating_led_on=heating, light_warning=light_warning,
                        buzzer_on=bool(due), due_alarm_ids=due)
 
     return app
+
+
+def decide(pref, occupied, temperature, light_level):
+    heating = pref.heating_enabled and occupied and temperature < pref.target_temperature_c
+    return heating, light_level > pref.light_warning_threshold
+
+
+RING_LIMIT = timedelta(minutes=30)
+
+
+def latest_occurrence(hhmm, local_now):
+    hour, minute = map(int, hhmm.split(":"))
+    at = local_now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    return at if at <= local_now else at - timedelta(days=1)
+
+
+def alarm_ringing(alarm, local_now):
+    snoozed = utc(alarm.snoozed_until)
+    if snoozed and local_now < snoozed:
+        return False
+    if snoozed and local_now < snoozed + RING_LIMIT:
+        return True
+    at = latest_occurrence(alarm.time, local_now)
+    return alarm.last_triggered_date != at.date().isoformat() and local_now < at + RING_LIMIT
+
+
+MAX_SAMPLE_GAP = timedelta(minutes=10)
+
+
+def summarise_nights(rows, tz):
+    nights = {}
+    for row in rows:
+        local = utc(row.recorded_at).astimezone(tz)
+        nights.setdefault((local - timedelta(hours=12)).date(), []).append(row)
+    latest = max(nights, default=None)
+    fresh = bool(rows) and datetime.now(timezone.utc) - utc(rows[-1].recorded_at) < 3 * MAX_SAMPLE_GAP
+    result = []
+    for night, samples in sorted(nights.items(), reverse=True):
+        occupied = [r for r in samples if r.occupied]
+        if not occupied:
+            continue
+        asleep = timedelta()
+        exits = 0
+        for prev, cur in zip(samples, samples[1:]):
+            gap = utc(cur.recorded_at) - utc(prev.recorded_at)
+            if prev.occupied:
+                asleep += min(gap, MAX_SAMPLE_GAP)
+                if not cur.occupied and cur.recorded_at < occupied[-1].recorded_at:
+                    exits += 1
+        result.append({
+            "night": night.isoformat(),
+            "bedtime": utc(occupied[0].recorded_at).isoformat(),
+            "wake": utc(occupied[-1].recorded_at).isoformat(),
+            "in_bed_minutes": round(asleep.total_seconds() / 60),
+            "bed_exits": exits,
+            "avg_temperature_c": round(sum(r.temperature_c for r in occupied) / len(occupied), 1),
+            "in_progress": night == latest and samples[-1].occupied and fresh,
+        })
+    return result
 
 
 def snooze_duration(val):

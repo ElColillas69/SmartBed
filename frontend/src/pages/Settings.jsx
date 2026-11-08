@@ -88,11 +88,11 @@ function CareSettings() {
           <input id="c-hum" className="input" type="number" min={30} max={100} value={draft.humidityLimit} onChange={set('humidityLimit', true)} />
         </div>
         <div className="field">
-          <label htmlFor="c-low">Too cold below (°C)</label>
+          <label htmlFor="c-low">Preferred range, lowest (°C)</label>
           <input id="c-low" className="input" type="number" step={0.5} min={10} max={25} value={draft.lowTemp} onChange={set('lowTemp', true)} />
         </div>
         <div className="field">
-          <label htmlFor="c-high">Too warm above (°C)</label>
+          <label htmlFor="c-high">Preferred range, highest (°C)</label>
           <input id="c-high" className="input" type="number" step={0.5} min={18} max={35} value={draft.highTemp} onChange={set('highTemp', true)} />
         </div>
       </div>

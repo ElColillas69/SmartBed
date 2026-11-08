@@ -19,11 +19,11 @@
   color-scheme: dark;
 }
 :root[data-theme='light'] {
-  --paper: #f3eee4;
-  --paper-2: #ebe5d8;
-  --paper-3: #e0d8c8;
-  --rule: #d6cdbb;
-  --rule-strong: #b3a891;
+  --paper: #ffffff;
+  --paper-2: #f5f4f1;
+  --paper-3: #ebe9e4;
+  --rule: #e4e1db;
+  --rule-strong: #bcb6aa;
   --ink: #1d1a16;
   --ink-2: #5a5348;
   --ink-3: #8a8173;
@@ -33,16 +33,16 @@
   --red: #b8341f;
   --red-wash: rgba(184, 52, 31, 0.08);
   --band: rgba(61, 115, 84, 0.10);
-  --on-ink: #f3eee4;
+  --on-ink: #ffffff;
   color-scheme: light;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
-    --paper: #f3eee4;
-    --paper-2: #ebe5d8;
-    --paper-3: #e0d8c8;
-    --rule: #d6cdbb;
-    --rule-strong: #b3a891;
+    --paper: #ffffff;
+    --paper-2: #f5f4f1;
+    --paper-3: #ebe9e4;
+    --rule: #e4e1db;
+    --rule-strong: #bcb6aa;
     --ink: #1d1a16;
     --ink-2: #5a5348;
     --ink-3: #8a8173;
@@ -52,7 +52,7 @@
     --red: #b8341f;
     --red-wash: rgba(184, 52, 31, 0.08);
     --band: rgba(61, 115, 84, 0.10);
-    --on-ink: #f3eee4;
+    --on-ink: #ffffff;
     color-scheme: light;
   }}
 * { box-sizing: border-box; }
@@ -114,6 +114,17 @@ h2 { font-size: 15px; font-weight: 700; margin: 0; }
 .status.alert { border-left-color: var(--red); }
 .status h1 { font-size: clamp(32px, 5.4vw, 52px); }
 .status .stale { color: var(--ink-3); font-weight: 400; font-size: 0.5em; }
+/* stale: the headline is history, not the present. Grey rule, dashed, muted text. */
+.status.stale { border-left-style: dashed; border-left-color: var(--ink-3); }
+.status.stale h1 { color: var(--ink-2); }
+.stale-tag {
+  display: inline-block; margin: 6px 0 4px; padding: 3px 7px;
+  font: 500 12px/1.2 var(--mono); text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--ink-2); border: 1px dashed var(--ink-3);
+}
+.readouts-note { grid-column: 1 / -1; margin: 0 0 4px; font: 13px var(--mono); color: var(--ink-3); }
+.readouts.is-stale .reading { color: var(--ink-3); }
+@media (max-width: 720px) { .status .stale { display: block; font-size: 0.45em; margin-top: 4px; } }
 .status-sub { margin: 8px 0 0; color: var(--ink-2); font-size: 17px; }
 .status-sub b { font-family: var(--mono); font-weight: 500; color: var(--ink); }
 .all-clear { margin: 0 0 8px; padding: 12px 0; color: var(--ink-2); border-top: 1px dashed var(--rule-strong); border-bottom: 1px dashed var(--rule-strong); }
@@ -172,7 +183,7 @@ h2 { font-size: 15px; font-weight: 700; margin: 0; }
 .axis span:last-child::before { left: auto; right: 0; }
 .readouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding-bottom: 22px; }
 .readout { padding: 0 24px; border-left: 1px solid var(--rule); }
-.readout:first-child { padding-left: 0; border-left: 0; }
+.readout:first-of-type { padding-left: 0; border-left: 0; }
 .readout:last-child { padding-right: 0; }
 .reading { font: 500 40px/1.1 var(--mono); font-variant-numeric: tabular-nums; margin-top: 8px; letter-spacing: -0.02em; }
 .reading small { font-size: 0.45em; color: var(--ink-2); margin-left: 3px; letter-spacing: 0; }
@@ -273,3 +284,17 @@ input[type='range'] { width: 100%; accent-color: var(--ink); }
 .toast.error { background: var(--red); }
 @media (max-width: 760px) { .toast { bottom: 84px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+
+/* ---------- hierarchy: tonight's sleep leads, room readings and heating step back ---------- */
+.facts .lead dt { color: var(--ink); font-weight: 700; }
+.facts .lead dd { font-size: 44px; letter-spacing: -0.02em; }
+.facts .lead .goal-track { height: 14px; }
+.log-item.critical { padding-top: 16px; padding-bottom: 16px; font-size: 19px; }
+.log-item.critical .tag { font-size: 13px; padding-top: 5px; }
+.minor h2 { font-size: 13px; font-weight: 400; color: var(--ink-3); }
+.minor .reading { font-size: 28px; margin-top: 4px; }
+.minor .note { font-size: 13px; }
+.minor .spark { height: 32px; margin-top: 10px; }
+.block.minor { padding-bottom: 18px; }
+.heating.minor .block-head { margin-bottom: 8px; }
+.heating.minor .heater { font-size: 15px; }

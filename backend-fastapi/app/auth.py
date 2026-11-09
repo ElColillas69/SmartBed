@@ -38,6 +38,6 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 def allowed_bed(bed_id: str, user: User = Depends(get_current_user),
     db: Session = Depends(get_db)) -> str:
-    if db.get(BedAccess, (user.id, bed.id)) is None:
+    if db.get(BedAccess, (user.id, bed_id)) is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Bed not found")
     return bed_id

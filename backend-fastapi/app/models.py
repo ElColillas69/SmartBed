@@ -2,7 +2,7 @@
 from sqlalchemy import ForeignKey, String, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 from .database import Base
-import uuid
+from uuid import UUID, uuid4
 
 def now_utc():
     return datetime.now(timezone.utc)

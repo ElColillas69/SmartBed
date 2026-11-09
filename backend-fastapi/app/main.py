@@ -2,6 +2,7 @@
 from fastapi import FastAPI
 from .database import Base, engine
 from . import models
+from .routers import auth as auth_routes
 
 @asynccontextmanager
 async def lifespan(app):
@@ -9,8 +10,9 @@ async def lifespan(app):
     yield
 
 app = FastAPI(title="SmartBed",lifespan=lifespan)
+app.include_router(auth_routes.router)
 
 @app.get("/api/health")
 def health():
-    return {"status": ok}
+    return {"status": "ok"}
 

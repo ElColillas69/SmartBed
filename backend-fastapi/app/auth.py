@@ -7,7 +7,13 @@ from pwdlib import PasswordHash
 from sqlalchemy.orm import Session
 from .database import get_db
 from .models import User, BedAccess
+from dotenv import load_dotenv, dotenv_values
+from pathlib import Path
 
+env_path = Path(__file__).resolve().parent.parent / ".env"
+print("env path:", env_path, "| exists:", env_path.exists())
+print("values read:", list(dotenv_values(env_path).keys()))
+load_dotenv(env_path, override=True, encoding="utf-8-sig")
 SECRET_KEY = os.environ["JWT_SECRET"]
 ALGORITHM = "HS256"
 password_hash = PasswordHash.recommended()

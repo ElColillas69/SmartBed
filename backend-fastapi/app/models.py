@@ -8,7 +8,7 @@ def now_utc():
     return datetime.now(timezone.utc)
 
 class User(Base):
-    __tablename__ = "user"
+    __tablename__ = "user" # raw sql will have to use "user" instead of user
     id: Mapped[UUID] = mapped_column(default=lambda: str(uuid.uuid4()), primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True)
     password_hash: Mapped[str]
@@ -37,17 +37,17 @@ class Reading(Base):
     __tablename__ = "reading"
     id: Mapped[UUID] = mapped_column(default=lambda: str(uuid.uuid4()), primary_key=True)
     bed_id: Mapped[UUID] = mapped_column(ForeignKey("bed.id"), index=True)
-    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    occupied: Mapped[bool] = mapped_column(default=False)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
+    occupied: Mapped[bool] = mapped_column(default=True) # originally False, change back if need be
     temperature_c: Mapped[float]
-    humidity_percent: Mapped[int]
+    humidity_percent: Mapped[float]
     light_level: Mapped[int]
     heating_led_on: Mapped[bool]
     light_warning: Mapped[bool]
 
 class BedSettings(Base):
     __tablename__ = "bed_setting"
-    id: Mapped[UUID] = mapped_column(ForeignKey("bed.id"), primary_key=True) # each bed gets one row only
+    bed_id: Mapped[UUID] = mapped_column(ForeignKey("bed.id"), primary_key=True) # each bed gets one row only
     target_temperature_c: Mapped[float] = mapped_column(default=21.0, nullable=False)
     light_warning_threshold: Mapped[int] = mapped_column(default=800, nullable=False)
     heating_enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
@@ -57,9 +57,9 @@ class Alarm(Base):
     id: Mapped[UUID] = mapped_column(default=lambda: str(uuid.uuid4()), primary_key=True)
     bed_id: Mapped[UUID] = mapped_column(ForeignKey("bed.id"), index=True)
     time: Mapped[str] = mapped_column(String(5), nullable=False) # local hh:mm
-    label: Mapped[str] = mapped_column(String(80), nullable=False, default=True)
+    label: Mapped[str] = mapped_column(String(80), nullable=False, default="Wake up")
     enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
     snooze_minutes: Mapped[int] = mapped_column(default=5 ,nullable=False)
-    last_triggered_date: Mapped[str] = mapped_column(String(10), nullable=True)
-    snoozed_until: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    last_triggered_date: Mapped[str | None] = mapped_column(String(10))
+    snoozed_until: Mapped[datetime | None ] = mapped_column(DateTime(timezone=True))
 

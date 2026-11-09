@@ -38,7 +38,7 @@ class Reading(Base):
     id: Mapped[UUID] = mapped_column(default=lambda: str(uuid.uuid4()), primary_key=True)
     bed_id: Mapped[UUID] = mapped_column(ForeignKey("bed.id"), index=True)
     recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
-    occupied: Mapped[bool] = mapped_column(default=True) # originally False, change back if need be
+    occupied: Mapped[bool]
     temperature_c: Mapped[float]
     humidity_percent: Mapped[float]
     light_level: Mapped[int]

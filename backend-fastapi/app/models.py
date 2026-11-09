@@ -20,6 +20,7 @@ class Bed(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     resident_name: Mapped[str] = mapped_column(String(80))
     timezone: Mapped[str] = mapped_column(String(64), default="Europe/Dublin")
+    pairing_code: Mapped[str] = mapped_column(String(16),unique=True, default=lambda: secrets.token_hex(4))
 
 class BedAccess(Base):
     __tablename__ = "bed_access"

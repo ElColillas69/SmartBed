@@ -1,3 +1,4 @@
+// Partly generated with Claude (Anthropic, 2026): takes the chosen bed.
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { api } from './api'
 import { useCarePrefs } from './care'
@@ -6,7 +7,7 @@ import { usePoll } from './usePoll'
 
 const BedContext = createContext(null)
 
-export function BedDataProvider({ children }) {
+export function BedDataProvider({ bed, children }) {
   const live = usePoll(async () => {
     const [readings, commands] = await Promise.all([api.readings(8 * 60), api.commands()])
     return { readings, commands, latest: readings[0] ?? null }
@@ -14,7 +15,7 @@ export function BedDataProvider({ children }) {
   const prefs = usePoll(api.preferences, 30000)
   const alarms = usePoll(api.alarms, 15000)
   const nights = usePoll(() => api.nights(7), 60000)
-  const [care, setCare] = useCarePrefs()
+  const [care, setCare] = useCarePrefs(bed)
   const [toast, setToast] = useState(null)
 
   const notify = useCallback((message, kind = 'ok') => {
@@ -41,7 +42,7 @@ export function BedDataProvider({ children }) {
   )
 
   const value = {
-    live, prefs, alarms, nights, care, setCare, conditions, notify, act, toast,
+    bed, live, prefs, alarms, nights, care, setCare, conditions, notify, act, toast,
     connected: !live.error && live.data !== undefined,
   }
   return <BedContext.Provider value={value}>{children}</BedContext.Provider>

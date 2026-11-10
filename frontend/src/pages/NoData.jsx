@@ -1,3 +1,4 @@
+// Partly generated with Claude (Anthropic, 2026): new run instructions.
 import { BedMark } from '../components/ui'
 
 export default function NoData({ state, empty }) {
@@ -16,16 +17,14 @@ export default function NoData({ state, empty }) {
       {empty ? (
         <>
           <h3>No readings yet</h3>
-          <p>Connect the bed's Raspberry Pi, or try it with demo data:<br />
-            <code>python seed_demo.py</code> then <code>python simulate.py</code></p>
+          <p>Switch on the bed's Raspberry Pi, or try it with fake data:<br />
+            <code>python simulate.py --include-maureen</code></p>
         </>
       ) : (
         <>
           <h3>Can't reach the bed</h3>
           <p>{state?.error?.message}.<br />
-            {state?.error?.status === 401
-              ? <>Check <code>API_KEY</code> in <code>backend/.env</code> and restart <code>npm run dev</code>.</>
-              : <>Start the backend with <code>python run.py</code>. This page keeps retrying.</>}
+            Start the backend with <code>fastapi dev app/main.py</code> in <code>backend-fastapi</code>. This page keeps retrying.
           </p>
         </>
       )}

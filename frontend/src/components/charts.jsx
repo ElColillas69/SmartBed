@@ -1,6 +1,9 @@
 import { clock, duration, parseTime } from '../lib/time'
 
+<<<<<<< HEAD
 // Average points into fixed time buckets so bursts of fast readings don't dominate.
+=======
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 export function downsample(points, buckets = 60) {
   if (points.length <= buckets) return points
   const t0 = points[0].t
@@ -15,7 +18,10 @@ export function downsample(points, buckets = 60) {
   return [...groups.values()].map((g) => ({ t: g.t / g.n, v: g.v / g.n }))
 }
 
+<<<<<<< HEAD
 // Plain trend line, like a pen trace. `band` shades the acceptable range.
+=======
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 export function Sparkline({ points: raw, band, color = 'var(--ink)', label, minSpan = 1 }) {
   const points = downsample(raw)
   if (points.length < 2) return <div className="spark" aria-hidden />
@@ -24,7 +30,10 @@ export function Sparkline({ points: raw, band, color = 'var(--ink)', label, minS
   const values = points.map((p) => p.v)
   let lo = Math.min(...values, ...(band ?? []))
   let hi = Math.max(...values, ...(band ?? []))
+<<<<<<< HEAD
   // A floor on the vertical range keeps sensor jitter from looking like drama.
+=======
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
   if (hi - lo < minSpan) { const mid = (hi + lo) / 2; hi = mid + minSpan / 2; lo = mid - minSpan / 2 }
   const t0 = points[0].t
   const span = points.at(-1).t - t0 || 1
@@ -41,7 +50,10 @@ export function Sparkline({ points: raw, band, color = 'var(--ink)', label, minS
   )
 }
 
+<<<<<<< HEAD
 // Time in bed against the goal, as a ruler with an hour tick.
+=======
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 export function GoalBar({ minutes, goal }) {
   const total = Math.max(goal, minutes ?? 0)
   const hours = Math.floor(total / 60)
@@ -58,7 +70,10 @@ export function GoalBar({ minutes, goal }) {
   )
 }
 
+<<<<<<< HEAD
 // In-bed / out-of-bed timeline. readings are newest first.
+=======
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 export function OccupancyStrip({ readings, hours = 8, now = new Date() }) {
   const end = now.getTime()
   const start = end - hours * 3600_000

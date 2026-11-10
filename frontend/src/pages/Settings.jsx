@@ -49,7 +49,10 @@ function BedSettings() {
 function CareSettings() {
   const { care, setCare, notify } = useBed()
   const [draft, setDraft] = useState(care)
+<<<<<<< HEAD
   // An emptied number field stays '' and fails validation instead of silently saving 0.
+=======
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
   const set = (k, num) => (e) => setDraft({ ...draft, [k]: num ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value })
   const dirty = JSON.stringify(draft) !== JSON.stringify(care)
   const within = (v, lo, hi) => Number.isFinite(v) && v >= lo && v <= hi
@@ -89,11 +92,19 @@ function CareSettings() {
           <input id="c-hum" className="input" type="number" min={30} max={100} value={draft.humidityLimit} onChange={set('humidityLimit', true)} />
         </div>
         <div className="field">
+<<<<<<< HEAD
           <label htmlFor="c-low">Too cold below (°C)</label>
           <input id="c-low" className="input" type="number" step={0.5} min={10} max={25} value={draft.lowTemp} onChange={set('lowTemp', true)} />
         </div>
         <div className="field">
           <label htmlFor="c-high">Too warm above (°C)</label>
+=======
+          <label htmlFor="c-low">Preferred range, lowest (°C)</label>
+          <input id="c-low" className="input" type="number" step={0.5} min={10} max={25} value={draft.lowTemp} onChange={set('lowTemp', true)} />
+        </div>
+        <div className="field">
+          <label htmlFor="c-high">Preferred range, highest (°C)</label>
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
           <input id="c-high" className="input" type="number" step={0.5} min={18} max={35} value={draft.highTemp} onChange={set('highTemp', true)} />
         </div>
       </div>

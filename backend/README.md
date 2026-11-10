@@ -62,8 +62,13 @@ The physical Pi should periodically GET `/api/device/commands` and control the b
 ## 5. Demo data and Pi simulator
 
 ```bash
+<<<<<<< HEAD
 python seed_demo.py      # a week of realistic nights, written straight to the database
 python simulate.py       # posts a reading every 5 s like the Pi; press Enter to toggle in/out of bed
+=======
+python seed_demo.py
+python simulate.py
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 ```
 
 The React dashboard in `../frontend` reads all of this; see its README.

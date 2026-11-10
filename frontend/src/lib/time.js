@@ -14,6 +14,25 @@ export function duration(minutes) {
   return h ? `${h}h ${String(m % 60).padStart(2, '0')}m` : `${m}m`
 }
 
+<<<<<<< HEAD
+=======
+// "3 minutes", "1 minute", "1 hour", "2h 05m". For prose, where "0m" reads like a glitch.
+export function minutesText(minutes) {
+  const m = Math.max(0, Math.round(minutes))
+  if (m < 60) return `${m} minute${m === 1 ? '' : 's'}`
+  if (m % 60 === 0) return `${m / 60} hour${m === 60 ? '' : 's'}`
+  return duration(m)
+}
+
+// How long ago, in words: "a moment ago" under a minute, then minutesText.
+export function agoText(minutes) {
+  if (minutes < 1) return 'a moment ago'
+  // past two days, hours and minutes are noise: "3 days ago"
+  if (minutes >= 48 * 60) return `${Math.floor(minutes / 1440)} days ago`
+  return `${minutesText(minutes)} ago`
+}
+
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 export function ago(date, now = Date.now()) {
   if (!date) return 'never'
   const s = Math.round((now - date.getTime()) / 1000)

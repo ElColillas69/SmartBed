@@ -36,8 +36,13 @@ export function BedDataProvider({ children }) {
   }, [notify])
 
   const conditions = useMemo(
+<<<<<<< HEAD
     () => deriveConditions({ latest: live.data?.latest, readings: live.data?.readings, commands: live.data?.commands, care }),
     [live.data, care],
+=======
+    () => deriveConditions({ latest: live.data?.latest, readings: live.data?.readings, commands: live.data?.commands, care, heating: prefs.data }),
+    [live.data, prefs.data, care],
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
   )
 
   const value = {

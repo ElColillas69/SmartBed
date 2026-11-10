@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # smartBed — web dashboard
 
 React (Vite) dashboard for caretakers and relatives watching over someone's bed: live occupancy, room climate, sleep history, heating and wake-up alarms. It talks to the Flask API in `../backend`.
@@ -8,16 +9,30 @@ You need Node 20+ and the backend running.
 
 ```bash
 # terminal 1 — backend
+=======
+# smartBed dashboard
+
+React dashboard for caretakers and relatives keeping an eye on someone's bed: live occupancy, room climate, sleep history, heating and wake-up alarms. It connects to the Flask API by ../backend
+
+
+```bash
+# terminal running the backend
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 cd backend
 python run.py
 python seed_demo.py     # optional: a week of demo nights
 python simulate.py      # optional: pretend to be the Pi (Enter toggles in/out of bed)
 
+<<<<<<< HEAD
 # terminal 2 — frontend
+=======
+# different terminal running the frontend
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 cd frontend
 npm install
 npm run dev             # http://localhost:5173
 ```
+<<<<<<< HEAD
 
 The dev server proxies `/api` to `http://127.0.0.1:5000` and adds the `X-API-Key` header itself, reading `API_KEY` from `backend/.env`. The key is never sent to the browser. To point somewhere else, copy `.env.example` to `.env.local`.
 
@@ -46,3 +61,5 @@ Atkinson Hyperlegible is the text face. It was designed for readers with low vis
 - Logins, roles and the alert escalation / resolution log. Care preferences live in `localStorage` until there is a table for them.
 - Boost heat. The API has no timed override.
 - Production hosting. `npm run build` gives static files, but the API key must then be added by a reverse proxy or replaced by real user sessions, never put in the bundle.
+=======
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e

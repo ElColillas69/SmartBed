@@ -61,8 +61,13 @@ def test_sleep_nights_summary(client, auth):
     from smartbed import Reading, db
     start = datetime.now(timezone.utc).replace(hour=22, minute=0, second=0, microsecond=0) - timedelta(days=2)
     with client.application.app_context():
+<<<<<<< HEAD
         for i in range(0, 8 * 60, 5):  # 22:00 to 06:00 UTC, one sample per 5 min
             occupied = not (120 <= i < 135)  # one 15-minute bed exit
+=======
+        for i in range(0, 8 * 60, 5):
+            occupied = not (120 <= i < 135)
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
             db.session.add(Reading(recorded_at=start + timedelta(minutes=i), occupied=occupied,
                                    temperature_c=19.0, humidity_percent=50, light_level=10,
                                    heating_led_on=False, light_warning=False))
@@ -89,7 +94,11 @@ def test_latest_is_newest_by_time_not_insert_order(client, auth):
     from datetime import datetime, timedelta, timezone
     from smartbed import Reading
     client.post("/api/readings", headers=auth, json={"occupied": True, "temperature_c": 20, "humidity_percent": 50, "light_level": 10})
+<<<<<<< HEAD
     with client.application.app_context():  # what seed_demo.py does: backdated rows inserted later
+=======
+    with client.application.app_context():
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
         db.session.add(Reading(recorded_at=datetime.now(timezone.utc) - timedelta(hours=3), occupied=False,
                                temperature_c=18, humidity_percent=50, light_level=10,
                                heating_led_on=False, light_warning=False))
@@ -103,7 +112,11 @@ def test_readings_time_window_is_thinned(client, auth):
     from smartbed import Reading
     now = datetime.now(timezone.utc)
     with client.application.app_context():
+<<<<<<< HEAD
         for i in range(600):  # one every 5 s for 50 minutes, plus one older row
+=======
+        for i in range(600):
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
             db.session.add(Reading(recorded_at=now - timedelta(seconds=5 * i), occupied=i == 0, temperature_c=20,
                                    humidity_percent=50, light_level=10, heating_led_on=False, light_warning=False))
         db.session.add(Reading(recorded_at=now - timedelta(hours=2), occupied=True, temperature_c=20,
@@ -122,10 +135,17 @@ def test_alarm_rings_until_answered(client, auth):
     tz = ZoneInfo("Europe/Dublin")
     now = datetime.now(tz)
     alarm = Alarm(time=(now - timedelta(minutes=3)).strftime("%H:%M"), enabled=True, snooze_minutes=5)
+<<<<<<< HEAD
     assert alarm_ringing(alarm, now)  # missed the exact minute, still rings
     assert not alarm_ringing(alarm, now + timedelta(minutes=40))  # gives up after RING_LIMIT
     alarm.last_triggered_date = (now - timedelta(minutes=3)).date().isoformat()
     assert not alarm_ringing(alarm, now)  # dismissed
+=======
+    assert alarm_ringing(alarm, now)
+    assert not alarm_ringing(alarm, now + timedelta(minutes=40))
+    alarm.last_triggered_date = (now - timedelta(minutes=3)).date().isoformat()
+    assert not alarm_ringing(alarm, now)
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 
 
 def test_new_alarm_for_a_time_just_passed_stays_quiet(client, auth):

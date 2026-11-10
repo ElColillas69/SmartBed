@@ -1,7 +1,10 @@
+<<<<<<< HEAD
 -- Demo data for database/schema.sql: one family user, one care-home user,
 -- one resident (Maureen) and her bed with the full sensor kit.
 -- Password hashes are placeholders; real ones come from the backend.
 
+=======
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 INSERT INTO users (email, password_hash, display_name) VALUES
     ('claire@example.com', 'placeholder-not-a-real-hash', 'Claire K.'),
     ('staff@oakwood.example', 'placeholder-not-a-real-hash', 'Oakwood night staff');
@@ -27,7 +30,10 @@ INSERT INTO bed_settings (bed_id) VALUES (1);
 
 INSERT INTO alarms (bed_id, alarm_time, label) VALUES (1, '07:30', 'Morning');
 
+<<<<<<< HEAD
 -- One reading every 5 minutes for the last 8 hours
+=======
+>>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 INSERT INTO readings (device_id, measurement_type_id, value, recorded_at)
 SELECT d.device_id, mt.measurement_type_id,
        CASE mt.name

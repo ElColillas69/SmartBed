@@ -19,7 +19,7 @@ class ReadingIn(BaseModel):
     recorded_at: datetime
     occupied: bool
     temperature_c: float = Field(ge=-20, le=60)
-    humidity: float = Field(ge=0, le=100)
+    humidity_percent: float = Field(ge=0, le=100)
     light_level: int = Field(ge=0, le=1023)
 
 class ReadingOut(BaseModel):
@@ -29,7 +29,7 @@ class ReadingOut(BaseModel):
     recorded_at: datetime
     occupied: bool
     temperature_c: float
-    humidity: float
+    humidity_percent: float
     light_level: int
     heating_led_on: bool
     light_warning: bool

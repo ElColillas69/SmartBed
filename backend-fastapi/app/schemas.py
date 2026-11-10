@@ -16,7 +16,6 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 class ReadingIn(BaseModel):
-    bed_id: str
     recorded_at: datetime
     occupied: bool
     temperature_c: float = Field(ge=-20, le=60)

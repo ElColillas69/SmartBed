@@ -1,4 +1,5 @@
-﻿from pydantic import BaseModel, ConfigDict, EmailStr, Field
+﻿from datetime import datetime
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -26,7 +27,7 @@ class ReadingOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
     bed_id: str
-    recorded_at: datetime
+    recorded_at: datetime | None = None
     occupied: bool
     temperature_c: float
     humidity_percent: float

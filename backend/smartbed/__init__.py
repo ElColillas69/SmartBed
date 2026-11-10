@@ -109,10 +109,6 @@ def time_string(value):
 
 
 def newest_first(query):
-<<<<<<< HEAD
-    # Order by time, not id: seed_demo.py inserts backdated rows after live ones.
-=======
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
     return query.order_by(desc(Reading.recorded_at), desc(Reading.id))
 
 
@@ -163,12 +159,6 @@ def create_app(config=None):
         query = newest_first(db.session.query(Reading))
         if "minutes" not in request.args:
             return jsonify([r.as_dict() for r in query.limit(limit).all()])
-<<<<<<< HEAD
-        # A time window, thinned evenly to at most `limit` rows. The newest
-        # reading is always first, even if older than the window, so the
-        # current bed state stays exact and a silent Pi still shows as stale.
-=======
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
         try:
             minutes = int(request.args["minutes"])
         except ValueError:
@@ -241,11 +231,6 @@ def create_app(config=None):
         return jsonify(pref.as_dict())
 
     def mark_handled(alarm):
-<<<<<<< HEAD
-        """Treat the alarm's most recent time as already rung, so creating,
-        moving or re-enabling an alarm doesn't set it off for a time just passed."""
-=======
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
         local_now = datetime.now(ZoneInfo(app.config["BED_TIMEZONE"]))
         alarm.last_triggered_date = latest_occurrence(alarm.time, local_now).date().isoformat()
 
@@ -332,40 +317,20 @@ def create_app(config=None):
 
 
 def decide(pref, occupied, temperature, light_level):
-<<<<<<< HEAD
-    """Heating LED and light warning for one set of sensor values."""
-=======
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
     heating = pref.heating_enabled and occupied and temperature < pref.target_temperature_c
     return heating, light_level > pref.light_warning_threshold
 
 
-<<<<<<< HEAD
-RING_LIMIT = timedelta(minutes=30)  # an alarm nobody answers goes quiet after this
-
-
-def latest_occurrence(hhmm, local_now):
-    """The most recent local datetime at which a daily HH:MM alarm went off."""
-=======
 RING_LIMIT = timedelta(minutes=30)
 
 
 def latest_occurrence(hhmm, local_now):
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
     hour, minute = map(int, hhmm.split(":"))
     at = local_now.replace(hour=hour, minute=minute, second=0, microsecond=0)
     return at if at <= local_now else at - timedelta(days=1)
 
 
 def alarm_ringing(alarm, local_now):
-<<<<<<< HEAD
-    """Rings from its time (or the end of a snooze) until dismissed, snoozed or RING_LIMIT passes.
-
-    Using a window instead of an exact-minute match means a Pi that polls less
-    than once a minute still hears the alarm.
-    """
-=======
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
     snoozed = utc(alarm.snoozed_until)
     if snoozed and local_now < snoozed:
         return False
@@ -375,11 +340,7 @@ def alarm_ringing(alarm, local_now):
     return alarm.last_triggered_date != at.date().isoformat() and local_now < at + RING_LIMIT
 
 
-<<<<<<< HEAD
-MAX_SAMPLE_GAP = timedelta(minutes=10)  # longer gaps are treated as missing data
-=======
 MAX_SAMPLE_GAP = timedelta(minutes=10)
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 
 
 def summarise_nights(rows, tz):

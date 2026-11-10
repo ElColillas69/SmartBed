@@ -14,8 +14,6 @@ export function duration(minutes) {
   return h ? `${h}h ${String(m % 60).padStart(2, '0')}m` : `${m}m`
 }
 
-<<<<<<< HEAD
-=======
 // "3 minutes", "1 minute", "1 hour", "2h 05m". For prose, where "0m" reads like a glitch.
 export function minutesText(minutes) {
   const m = Math.max(0, Math.round(minutes))
@@ -32,7 +30,6 @@ export function agoText(minutes) {
   return `${minutesText(minutes)} ago`
 }
 
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 export function ago(date, now = Date.now()) {
   if (!date) return 'never'
   const s = Math.round((now - date.getTime()) / 1000)

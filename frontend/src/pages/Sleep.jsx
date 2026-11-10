@@ -3,10 +3,6 @@ import { useBed } from '../lib/BedData'
 import { clock, duration, nightLabel, parseTime } from '../lib/time'
 import NoData from './NoData'
 
-<<<<<<< HEAD
-// Average clock time around midnight (22:50 and 00:10 average to 23:30, not noon).
-=======
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 function averageClock(dates) {
   if (!dates.length) return null
   const mins = dates.map((d) => {

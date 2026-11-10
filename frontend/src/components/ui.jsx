@@ -1,9 +1,5 @@
 import { Minus, Plus } from 'lucide-react'
 
-<<<<<<< HEAD
-// A ruled section with a small heading, like a page in a care log.
-=======
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 export function Card({ title, action, className = '', children }) {
   return (
     <section className={`block ${className}`}>
@@ -54,10 +50,6 @@ export function PageHead({ kicker, title, children }) {
   )
 }
 
-<<<<<<< HEAD
-// A bed seen from the side: headboard, pillow, mattress.
-=======
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 export function BedMark({ className = 'brand-mark' }) {
   return (
     <svg className={className} viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2"

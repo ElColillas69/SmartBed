@@ -4,13 +4,8 @@ import { GoalBar, OccupancyStrip, Sparkline } from '../components/charts'
 import Conditions from '../components/Conditions'
 import { api } from '../lib/api'
 import { useBed } from '../lib/BedData'
-<<<<<<< HEAD
-import { lastChange, lightLabel } from '../lib/conditions'
-import { ago, clock, duration, nextAlarm, parseTime } from '../lib/time'
-=======
 import { isStale, lastChange, lightLabel, tempRange } from '../lib/conditions'
 import { ago, agoText, clock, duration, nextAlarm, parseTime } from '../lib/time'
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 import NoData from './NoData'
 
 function Readout({ label, value, unit, note, children }) {
@@ -24,10 +19,6 @@ function Readout({ label, value, unit, note, children }) {
   )
 }
 
-<<<<<<< HEAD
-// Send the target a moment after the last click, so quick +/+/+ isn't lost.
-=======
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 function useDebouncedTarget(saved, save) {
   const [pending, setPending] = useState(null)
   const timer = useRef()
@@ -57,22 +48,14 @@ export default function Tonight() {
   const change = lastChange(readings)
   const critical = conditions.some((c) => c.level === 'critical')
   const updated = parseTime(latest.recorded_at)
-<<<<<<< HEAD
-  const stale = conditions.some((c) => c.id === 'stale')
-=======
   const stale = isStale(latest, now)
   const silentFor = agoText((now - updated) / 60000)
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
   const series = (key) => readings.map((r) => ({ t: parseTime(r.recorded_at).getTime(), v: r[key] })).reverse()
   const tonight = nights.data?.[0]
   const alarm = nextAlarm(alarms.data, now)
   const refreshAlarms = () => Promise.all([live.refresh(), alarms.refresh()])
-<<<<<<< HEAD
-  const state = critical ? 'alert' : latest.occupied ? 'in' : 'out'
-=======
   const state = critical ? 'alert' : stale ? 'stale' : latest.occupied ? 'in' : 'out'
   const where = latest.occupied ? 'in bed' : 'out of bed'
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 
   return (
     <>
@@ -80,17 +63,6 @@ export default function Tonight() {
         <div className="kicker">
           {now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}, {clock(now)}
         </div>
-<<<<<<< HEAD
-        <h1>
-          {care.residentName} is {latest.occupied ? 'in bed' : 'out of bed'}
-          {stale && <span className="stale"> (last we heard)</span>}
-        </h1>
-        <p className="status-sub">
-          {change && <>{change.sinceKnown ? 'Since' : 'At least since'} <b>{clock(change.since)}</b>, {duration((now - change.since) / 60000)} ago. </>}
-          Last reading {ago(updated)}.
-          {alarm && <> Alarm set for <b>{alarm.time}</b>.</>}
-        </p>
-=======
         {stale && <div className="stale-tag">Not live · no data for {silentFor.replace(/ ago$/, '')}</div>}
         <h1>
           {care.residentName} {stale ? 'was' : 'is'} {where}
@@ -109,7 +81,6 @@ export default function Tonight() {
             {alarm && <> Alarm set for <b>{alarm.time}</b>.</>}
           </p>
         )}
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
       </header>
 
       <Conditions items={conditions}
@@ -129,11 +100,7 @@ export default function Tonight() {
             <div><dt>{tonight.in_progress ? 'Went to bed' : 'Bedtime'}</dt><dd>{clock(parseTime(tonight.bedtime))}</dd></div>
             <div><dt>Times up</dt><dd>{tonight.bed_exits}</dd></div>
             <div><dt>Avg temp</dt><dd>{tonight.avg_temperature_c.toFixed(1)}°</dd></div>
-<<<<<<< HEAD
-            <div className="wide">
-=======
             <div className="wide lead">
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
               <dt>In bed <span>goal {duration(care.sleepGoalMinutes)}</span></dt>
               <dd>{duration(tonight.in_bed_minutes)}</dd>
               <GoalBar minutes={tonight.in_bed_minutes} goal={care.sleepGoalMinutes} />
@@ -142,16 +109,10 @@ export default function Tonight() {
         )}
       </Card>
 
-<<<<<<< HEAD
-      <section className="block readouts" aria-label="Room">
-        <Readout label="Temperature" value={latest.temperature_c.toFixed(1)} unit="°C"
-          note={`OK between ${care.lowTemp} and ${care.highTemp}°C`}>
-=======
       <section className={`block readouts minor${stale ? ' is-stale' : ''}`} aria-label="Room">
         {stale && <p className="readouts-note">Room readings below are from the last reading, {silentFor}.</p>}
         <Readout label="Temperature" value={latest.temperature_c.toFixed(1)} unit="°C"
           note={`Preferred range ${tempRange(care)}`}>
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
           <Sparkline label="Temperature, last 8 hours" points={series('temperature_c')} band={[care.lowTemp, care.highTemp]} minSpan={4} />
         </Readout>
         <Readout label="Humidity" value={Math.round(latest.humidity_percent)} unit="%"
@@ -164,22 +125,14 @@ export default function Tonight() {
         </Readout>
       </section>
 
-<<<<<<< HEAD
-      <Card title="Heating" className="heating">
-=======
       <Card title="Heating" className="heating minor">
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
         <div className="heating-row">
           <p className="heater">
             <span className={`lamp ${commands.heating_led_on ? 'on' : ''}`} aria-hidden />
             <span>
               <b>Heater {commands.heating_led_on ? 'on' : 'off'}</b>
               {' · '}
-<<<<<<< HEAD
-              {!pref?.heating_enabled ? 'automatic heating is paused' : commands.heating_led_on ? 'warming up to target' : latest.occupied ? 'room is warm enough' : 'waits until someone is in bed'}
-=======
               {!pref?.heating_enabled ? 'automatic heating is paused' : stale ? 'no recent reading to act on' : commands.heating_led_on ? 'warming up to target' : latest.occupied ? 'room is warm enough' : 'waits until someone is in bed'}
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
             </span>
           </p>
           {pref && (

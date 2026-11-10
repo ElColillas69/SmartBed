@@ -1,13 +1,3 @@
-<<<<<<< HEAD
-"""Fill the development database with a week of realistic nights.
-
-Usage:  python seed_demo.py          (adds to the database in .env)
-        python seed_demo.py --reset  (clears readings first)
-
-For demos only: it writes straight to the database, bypassing the API.
-"""
-=======
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 import random
 import sys
 from datetime import datetime, timedelta, timezone
@@ -19,10 +9,6 @@ STEP = timedelta(minutes=2)
 
 
 def night_readings(bed_local, wake_local, exits, base_temp, pref, now):
-<<<<<<< HEAD
-    """Readings from 30 min before bed to 30 min after waking (or until now)."""
-=======
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
     t = bed_local - timedelta(minutes=30)
     exit_windows = []
     for _ in range(exits):

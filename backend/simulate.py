@@ -1,12 +1,4 @@
-<<<<<<< HEAD
-"""Pretend to be the Raspberry Pi: post a reading every few seconds.
 
-Usage:  python simulate.py [--interval 5] [--url http://127.0.0.1:5000]
-Keys while running: press Enter to toggle the bed between occupied and empty.
-"""
-=======
-
->>>>>>> 62ba779d97e8db9fee3900b13740929ffaf8da1e
 import argparse
 import json
 import os

@@ -298,3 +298,16 @@ input[type='range'] { width: 100%; accent-color: var(--ink); }
 .block.minor { padding-bottom: 18px; }
 .heating.minor .block-head { margin-bottom: 8px; }
 .heating.minor .heater { font-size: 15px; }
+
+/* ---------- sign-in and bed access ---------- */
+/* Generated with Claude (Anthropic, 2026). */
+.gate { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+.gate .block { width: min(420px, 100%); }
+.gate h1 { margin: 6px 0 18px; }
+.gate-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--ink-2); }
+.stack { display: flex; flex-direction: column; gap: 16px; margin-bottom: 18px; }
+.form-error { color: var(--red); font-size: 14px; margin: 0; }
+.link { background: none; border: 0; padding: 0; font: inherit; color: var(--ink); text-decoration: underline; cursor: pointer; }
+.input.mono { font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.04em; }
+.bed-select { font: inherit; color: inherit; background: transparent; border: 0; padding: 0; cursor: pointer; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

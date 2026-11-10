@@ -15,3 +15,26 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
+class ReadingIn(BaseModel):
+    bed_id: str
+    recorded_at: datetime
+    occupied: bool
+    temperature_c: float
+    humidity: float
+    light_level: int
+    heating_led_on: bool
+    light_warning: bool
+
+class ReadingOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    bed_id: str
+    recorded_at: datetime
+    occupied: bool
+    temperature_c: float
+    humidity: float
+    light_level: int
+    heating_led_on: bool
+    light_warning: bool
+
+

@@ -1,5 +1,6 @@
 ﻿from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from .logic import utc
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -34,5 +35,10 @@ class ReadingOut(BaseModel):
     light_level: int
     heating_led_on: bool
     light_warning: bool
+
+    @field_validator("recorded_at")
+    @classmethod
+    def assume_utc(cls, value):
+        return utc(value)
 
 

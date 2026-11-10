@@ -19,11 +19,9 @@ class ReadingIn(BaseModel):
     bed_id: str
     recorded_at: datetime
     occupied: bool
-    temperature_c: float
-    humidity: float
-    light_level: int
-    heating_led_on: bool
-    light_warning: bool
+    temperature_c: float = Field(ge=-20, le=60)
+    humidity: float = Field(ge=0, le=100)
+    light_level: int = Field(ge=0, le=1023)
 
 class ReadingOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)

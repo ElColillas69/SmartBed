@@ -1,8 +1,10 @@
+// Partly generated with Claude (Anthropic, 2026): bed switcher and sign out.
 import { NavLink, Route, Routes } from 'react-router-dom'
 import { AlarmClock, BedDouble, CalendarDays, SlidersHorizontal } from 'lucide-react'
 import ThemeSwitch from './components/ThemeSwitch'
 import { BedMark } from './components/ui'
 import { useBed } from './lib/BedData'
+import { useSession } from './lib/Session'
 import Tonight from './pages/Tonight'
 import Sleep from './pages/Sleep'
 import Alarms from './pages/Alarms'
@@ -25,15 +27,31 @@ function Connection() {
   )
 }
 
+// Shows whose room this is; a dropdown when the account can see several beds.
+function BedSwitcher() {
+  const { beds, bed, chooseBed } = useSession()
+  const { care } = useBed()
+  if (beds.length < 2) return <span className="who">{care.residentName}’s room</span>
+  return (
+    <label className="who">
+      <span className="sr-only">Bed</span>
+      <select className="bed-select" value={bed.id} onChange={(e) => chooseBed(e.target.value)}>
+        {beds.map((b) => <option key={b.id} value={b.id}>{b.resident_name}’s room</option>)}
+      </select>
+    </label>
+  )
+}
+
 export default function App() {
-  const { care, conditions, toast } = useBed()
+  const { conditions, toast } = useBed()
+  const { logout } = useSession()
   const urgent = conditions.filter((c) => c.level !== 'info').length
 
   return (
     <div className="app">
       <header className="topbar">
         <NavLink to="/" className="brand"><BedMark /><span>smartbed</span></NavLink>
-        <span className="who">{care.residentName}’s room</span>
+        <BedSwitcher />
         <nav className="nav" aria-label="Main">
           {NAV.map(({ to, label }) => (
             <NavLink key={to} to={to} end>
@@ -45,6 +63,7 @@ export default function App() {
         <div className="topbar-end">
           <Connection />
           <ThemeSwitch />
+          <button className="btn ghost sm" onClick={logout}>Sign out</button>
         </div>
       </header>
 

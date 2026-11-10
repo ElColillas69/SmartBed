@@ -17,7 +17,7 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 class ReadingIn(BaseModel):
-    recorded_at: datetime
+    recorded_at: datetime | None = None
     occupied: bool
     temperature_c: float = Field(ge=-20, le=60)
     humidity_percent: float = Field(ge=0, le=100)
@@ -27,7 +27,7 @@ class ReadingOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
     bed_id: str
-    recorded_at: datetime | None = None
+    recorded_at: datetime
     occupied: bool
     temperature_c: float
     humidity_percent: float

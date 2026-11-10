@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 def register(body: UserCreate, db: Session = Depends(get_db)):
     if db.scalar(select(User).where(User.email == body.email)):
         raise HTTPException(409, "Email already registered")
-    user = User(email=body.email, display_name=body.display_name, role=body.role,
+    user = User(email=body.email, display_name=body.display_name,
     password_hash=hash_password(body.password))
     db.add(user)
     db.commit()

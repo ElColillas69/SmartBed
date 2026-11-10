@@ -2,6 +2,7 @@
 from sqlalchemy import ForeignKey, String, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 from .database import Base
+import secrets # for pairing code
 from uuid import UUID, uuid4
 
 def now_utc():
@@ -13,7 +14,6 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True)
     password_hash: Mapped[str]
     display_name: Mapped[str] = mapped_column(String(80))
-    role: Mapped[str] = mapped_column(String(20)) # resident or caretaker
 
 class Bed(Base):
     __tablename__ = "bed"

@@ -21,7 +21,7 @@ def verify_password(pw: str, hashed: str) -> bool:
 
 def create_token(user: User) -> str:
     expires = datetime.now(timezone.utc) + timedelta(hours=12)
-    return jwt.encode({"sub": user.id, "role": user.role, "exp": expires},
+    return jwt.encode({"sub": user.id, "exp": expires},
     SECRET_KEY, algorithm=ALGORITHM)
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:

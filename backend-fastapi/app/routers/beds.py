@@ -1,4 +1,4 @@
-﻿from fastapi import FastAPI
+﻿from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -30,4 +30,4 @@ def claim_bed(body: ClaimIn, user: User = Depends(get_current_user), db: Session
     if db.get(BedAccess, (user.id, bed.id)) is None:
         db.add(BedAccess(user_id=user.id, bed_id=bed.id))
         db.commit()
-    return beder.id)
+    return bed

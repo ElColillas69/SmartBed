@@ -1,3 +1,4 @@
+// Partly generated with Claude (Anthropic, 2026): "Your beds" card added.
 import { useEffect, useState } from 'react'
 import { Card, PageHead, Switch } from '../components/ui'
 import { api } from '../lib/api'
@@ -5,6 +6,8 @@ import { useBed } from '../lib/BedData'
 import { CARE_DEFAULTS } from '../lib/care'
 import { lightLabel } from '../lib/conditions'
 import ThemeSwitch from '../components/ThemeSwitch'
+import ClaimBed from '../components/ClaimBed'
+import { useSession } from '../lib/Session'
 
 function BedSettings() {
   const { prefs, live, act } = useBed()
@@ -104,6 +107,26 @@ function CareSettings() {
   )
 }
 
+function Beds() {
+  const { beds, bed, chooseBed, user, logout } = useSession()
+  const { notify } = useBed()
+  return (
+    <Card title="Your beds">
+      <p className="note">{user ? `Signed in as ${user.email}. ` : ''}You can see {beds.map((b) => b.resident_name).join(', ')}.</p>
+      {beds.length > 1 && (
+        <div className="field" style={{ marginBottom: 18 }}>
+          <label htmlFor="pick-bed">Showing</label>
+          <select id="pick-bed" className="input" value={bed.id} onChange={(e) => chooseBed(e.target.value)}>
+            {beds.map((b) => <option key={b.id} value={b.id}>{b.resident_name}’s room</option>)}
+          </select>
+        </div>
+      )}
+      <ClaimBed onDone={(bed) => notify(`Added ${bed.resident_name}’s bed`)} />
+      <div className="row end"><button className="btn ghost" onClick={logout}>Sign out</button></div>
+    </Card>
+  )
+}
+
 export default function Settings() {
   return (
     <>
@@ -113,6 +136,7 @@ export default function Settings() {
       <div className="cols-2">
         <BedSettings />
         <CareSettings />
+        <Beds />
       </div>
     </>
   )

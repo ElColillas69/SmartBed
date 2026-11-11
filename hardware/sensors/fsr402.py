@@ -1,5 +1,6 @@
 
 import spidev
+import time
 
 
 class FSR402:
@@ -22,3 +23,26 @@ class FSR402:
 
     def close(self):
         self.spi.close()
+
+
+if __name__ == "__main__":
+    sensor = FSR402()
+
+    print("Reading FSR402...")
+    print("Press the sensor to see the readings change.")
+    print("Press CTRL+C to stop.\n")
+
+    try:
+        while True:
+            raw = sensor.read_raw()
+            percentage = round((raw / 1023) * 100, 2)
+
+            print(f"Pressure: {raw}/1023 | Signal: {percentage}%")
+
+            time.sleep(0.5)
+
+    except KeyboardInterrupt:
+        print("\nTest stopped.")
+
+    finally:
+        sensor.close()

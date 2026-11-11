@@ -2,8 +2,8 @@ import time
 import json
 from datetime import datetime, timezone
 
-from hardware.sensors.fsr402 import FSR402
-from hardware.sensors.dht22 import DHT22Sensor
+from sensors.fsr402 import FSR402
+from sensors.dht22 import DHT22Sensor
 
 
 DHT22_INTERVAL = 600

@@ -1,0 +1,6 @@
+# Generated with Claude (Anthropic, 2026).
+.venv
+.env
+*.db
+__pycache__
+tests

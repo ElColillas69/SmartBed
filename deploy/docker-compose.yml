@@ -1,0 +1,63 @@
+# Generated with Claude (Anthropic, 2026).
+# Everything that runs on the cloud VM. Start with:  docker compose up -d --build
+# Docs: https://docs.docker.com/compose/
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: smartbed
+      POSTGRES_USER: smartbed
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    # no "ports": the database is only reachable from the other containers
+
+  mqtt:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    ports: ["8883:8883"]                 # MQTT over TLS, for the Pi (port 1883 stays internal)
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto/aclfile:/mosquitto/config/aclfile:ro
+      - ./mosquitto/passwords:/mosquitto/config/passwords:ro
+      - caddy-data:/caddy:ro              # reuse Caddy's Let's Encrypt certificate
+    depends_on: [caddy]
+
+  api:
+    build: ../backend-fastapi
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://smartbed:${POSTGRES_PASSWORD}@db:5432/smartbed
+      JWT_SECRET: ${JWT_SECRET}
+      MQTT_HOST: mqtt
+      MQTT_PORT: "1883"                   # inside the private Docker network
+      MQTT_USERNAME: smartbed-server
+      MQTT_PASSWORD: ${MQTT_SERVER_PASSWORD}
+    depends_on: [db, mqtt]
+
+  simulator:                            # the fake beds, publishing like real Pis would
+    build: ../backend-fastapi
+    restart: unless-stopped
+    command: ["python", "simulate.py"]
+    environment:
+      MQTT_HOST: mqtt
+      MQTT_PORT: "1883"
+      SIM_MQTT_USERNAME: smartbed-simulator
+      SIM_MQTT_PASSWORD: ${MQTT_SIMULATOR_PASSWORD}
+      SIM_INTERVAL_SECONDS: "30"
+    depends_on: [api]
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]           # HTTPS for the web app and API
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../frontend/dist:/srv:ro          # the built React app (npm run build)
+      - caddy-data:/data
+
+volumes:
+  pgdata:
+  caddy-data:

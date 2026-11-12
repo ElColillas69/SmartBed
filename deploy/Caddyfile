@@ -1,0 +1,14 @@
+# Generated with Claude (Anthropic, 2026).
+# Caddy gets and renews a free HTTPS certificate for your domain automatically.
+# Docs: https://caddyserver.com/docs/automatic-https
+{$DOMAIN} {
+	encode gzip
+	handle /api/* {
+		reverse_proxy api:8000
+	}
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

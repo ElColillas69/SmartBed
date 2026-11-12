@@ -1,6 +1,6 @@
 # Partly generated with Claude (Anthropic, 2026): schemas moved to schemas.py, ordering and code normalising added; routes by Aleksy.
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..auth import get_current_user
@@ -20,7 +20,10 @@ def my_beds(user: User = Depends(get_current_user), db: Session = Depends(get_db
 
 @router.post("/claim", response_model=BedOut)
 def claim_bed(body: ClaimIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    bed = db.scalar(select(Bed).where(Bed.pairing_code == body.pairing_code.strip().upper()))
+    # Compare case-insensitively: seed.py uses codes like "MAUREEN1", but the model's
+    # default (secrets.token_hex) makes lowercase ones like "9f3a1c2b".
+    code = body.pairing_code.strip().upper()
+    bed = db.scalar(select(Bed).where(func.upper(Bed.pairing_code) == code))
     if bed is None:
         raise HTTPException(404, "No bed with that code")
     if db.get(BedAccess, (user.id, bed.id)) is None:

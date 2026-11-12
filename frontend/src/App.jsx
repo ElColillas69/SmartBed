@@ -4,6 +4,7 @@ import { AlarmClock, BedDouble, CalendarDays, SlidersHorizontal } from 'lucide-r
 import ThemeSwitch from './components/ThemeSwitch'
 import { BedMark } from './components/ui'
 import { useBed } from './lib/BedData'
+import { isStale } from './lib/conditions'
 import { useSession } from './lib/Session'
 import Tonight from './pages/Tonight'
 import Sleep from './pages/Sleep'
@@ -17,14 +18,15 @@ const NAV = [
   { to: '/settings', label: 'Settings', icon: SlidersHorizontal },
 ]
 
+// "Bed online" only when the server answers AND the bed's device sent a reading
+// recently. Reaching the server alone doesn't mean the Pi is on.
 function Connection() {
   const { connected, live } = useBed()
-  const state = connected ? 'ok' : live.loading ? 'wait' : 'down'
-  return (
-    <span className={`conn ${state}`}>
-      {connected ? 'Bed online' : live.loading ? 'Connecting…' : 'Bed offline'}
-    </span>
-  )
+  const latest = live.data?.latest
+  const fresh = connected && latest && !isStale(latest)
+  const state = fresh ? 'ok' : connected ? 'stale' : live.loading ? 'wait' : 'down'
+  const text = { ok: 'Bed online', stale: 'No recent readings', wait: 'Connecting…', down: 'Server offline' }
+  return <span className={`conn ${state}`}>{text[state]}</span>
 }
 
 // Shows whose room this is; a dropdown when the account can see several beds.

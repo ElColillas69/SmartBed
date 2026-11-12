@@ -1,0 +1,22 @@
+# Generated with Claude (Anthropic, 2026).
+# Who may publish/subscribe to what.  Docs: https://mosquitto.org/man/mosquitto-conf-5.html (acl_file)
+
+# The server reads every device's readings and writes every device's commands.
+user smartbed-server
+topic read smartbed/+/readings
+topic write smartbed/+/commands
+topic read smartbed/+/status
+
+# The simulator pretends to be the two fake beds' devices, and nothing else.
+user smartbed-simulator
+topic write smartbed/sim-patrick/readings
+topic write smartbed/sim-siobhan/readings
+topic read smartbed/sim-patrick/commands
+topic read smartbed/sim-siobhan/commands
+
+# Each device logs in with its device_id as username (%u), and can only
+# publish its OWN readings and read its OWN commands. A stolen Pi password
+# therefore can't write onto another resident's bed.
+pattern write smartbed/%u/readings
+pattern write smartbed/%u/status
+pattern read smartbed/%u/commands

@@ -15,13 +15,11 @@ services:
   mqtt:
     image: eclipse-mosquitto:2
     restart: unless-stopped
-    ports: ["8883:8883"]                 # MQTT over TLS, for the Pi (port 1883 stays internal)
+    ports: ["1883:1883"]                 # MQTT for the Pi (username + password required)
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - ./mosquitto/aclfile:/mosquitto/config/aclfile:ro
       - ./mosquitto/passwords:/mosquitto/config/passwords:ro
-      - caddy-data:/caddy:ro              # reuse Caddy's Let's Encrypt certificate
-    depends_on: [caddy]
 
   api:
     build: ../backend-fastapi
@@ -45,18 +43,19 @@ services:
       SIM_MQTT_USERNAME: smartbed-simulator
       SIM_MQTT_PASSWORD: ${MQTT_SIMULATOR_PASSWORD}
       SIM_INTERVAL_SECONDS: "30"
-    depends_on: [api]
+    depends_on: [api, mqtt]
 
   caddy:
-    image: caddy:2
+    build:                                # builds the React app and serves it (no Node needed on the VM)
+      context: ..
+      dockerfile: deploy/Caddy.Dockerfile
     restart: unless-stopped
     ports: ["80:80", "443:443"]           # HTTPS for the web app and API
     environment:
       DOMAIN: ${DOMAIN}
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ../frontend/dist:/srv:ro          # the built React app (npm run build)
       - caddy-data:/data
+    depends_on: [api]
 
 volumes:
   pgdata:

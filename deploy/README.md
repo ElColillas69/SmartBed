@@ -1,34 +1,34 @@
 # Deploying SmartBed to a cloud VM
 
-Generated with Claude (Anthropic, 2026). Not yet tried on a real VM; the pieces were
-tested locally (Mosquitto with this `aclfile`, the API on PostgreSQL, the simulator).
+Generated with Claude (Anthropic, 2026). The full stack below was run end to end with
+Docker (Pi-style MQTT publish on 1883 -> API -> PostgreSQL -> HTTPS API, and commands
+back to the Pi).
 
 What runs where:
 
-| Container  | What it is                                   | Reachable from the internet |
-|------------|----------------------------------------------|-----------------------------|
-| caddy      | HTTPS for the web app and `/api/*`           | 80, 443                     |
-| mqtt       | Mosquitto broker                             | 8883 (TLS only)             |
-| api        | FastAPI + the MQTT subscriber                | no (only via Caddy)         |
-| simulator  | fake Pis for Patrick's and Siobhan's beds    | no                          |
-| db         | PostgreSQL                                   | no                          |
+| Container  | What it is                                        | Reachable from the internet |
+|------------|---------------------------------------------------|-----------------------------|
+| caddy      | builds the React app; HTTPS for it and `/api/*`   | 80, 443                     |
+| mqtt       | Mosquitto broker (login + per-device ACL)         | 1883                        |
+| api        | FastAPI + the MQTT subscriber                     | no (only via Caddy)         |
+| simulator  | fake Pis for Patrick's and Siobhan's beds         | no                          |
+| db         | PostgreSQL                                        | no                          |
 
 ## 1. VM and domain
 
-Any small Ubuntu VM (Azure, AWS, DigitalOcean...). Open ports 22, 80, 443 and 8883 in its
-firewall. Point a domain or free subdomain (e.g. DuckDNS) at the VM's public IP.
-Install Docker: https://docs.docker.com/engine/install/ubuntu/
+Any small Ubuntu VM (we use AWS EC2). Open ports 22, 80, 443 and 1883 in its security
+group. Point the domain (`smartbed.ksander.online`, Cloudflare "DNS only") at the VM's
+Elastic IP. Install Docker: https://docs.docker.com/engine/install/ubuntu/
+
+Only Docker is needed on the VM: the frontend is built inside the caddy image.
 
 ## 2. Code and secrets
 
 ```bash
-git clone <repo> && cd SmartBed
+git clone https://github.com/ElColillas69/SmartBed.git && cd SmartBed
 cp deploy/.env.example deploy/.env      # fill every value; JWT_SECRET from:
 python3 -c "import secrets; print(secrets.token_hex(32))"
 ```
-
-In `deploy/mosquitto/mosquitto.conf`, replace both `example.com` in the cert paths with
-your DOMAIN.
 
 ## 3. MQTT passwords (one per account in `aclfile`)
 
@@ -38,33 +38,36 @@ docker run --rm -v "$PWD/mosquitto:/m" eclipse-mosquitto:2 sh -c '
   touch /m/passwords && chmod 0700 /m/passwords &&
   mosquitto_passwd -b /m/passwords smartbed-server    "<MQTT_SERVER_PASSWORD>" &&
   mosquitto_passwd -b /m/passwords smartbed-simulator "<MQTT_SIMULATOR_PASSWORD>" &&
-  mosquitto_passwd -b /m/passwords pi-maureen         "<a password for the Pi>"'
+  mosquitto_passwd -b /m/passwords pi-maureen         "<a password for the Pi>" &&
+  chown 1883:1883 /m/passwords'
 ```
 
-The Pi uses `pi-maureen` / that password in `hardware/.env` (with `MQTT_TLS=true`,
-`MQTT_PORT=8883`, `MQTT_HOST=<DOMAIN>`).
+The first two passwords must match `deploy/.env`. The `chown` matters: Mosquitto runs as
+user 1883 and won't start if it can't read the file. The Pi uses `pi-maureen` and its
+password in `hardware/.env` (see `hardware/.env.example`).
 
-## 4. Frontend build
-
-```bash
-cd frontend && npm ci && npm run build     # makes frontend/dist, served by Caddy
-```
-
-## 5. Start
+## 4. Start
 
 ```bash
 cd deploy
 docker compose up -d --build
 docker compose exec api python seed.py --no-history    # beds, devices, settings
+docker compose ps                                       # all five "Up"
 docker compose logs -f api                              # expect "Connected to MQTT broker"
 ```
 
-On the very first start Mosquitto may restart a few times until Caddy has fetched the
-certificate; after that, `docker compose restart mqtt`. Then open `https://<DOMAIN>`,
-create an account and claim a bed with its pairing code.
+Then open `https://<DOMAIN>`, create an account and claim a bed with its pairing code.
+
+## Updating after a `git pull`
+
+```bash
+cd deploy && docker compose up -d --build
+```
 
 ## Before showing it to anyone
 
 - The seed's pairing codes (`MAUREEN1`...) are guessable. On a public server, change them
   in the database or in `seed.py` to random ones.
 - Don't run `seed.py --demo-user` in the cloud (it makes a known password).
+- MQTT on 1883 is not encrypted (the lab setup). Every client still needs a password and
+  the ACL keeps each Pi to its own topics. The upgrade is a TLS listener on 8883.

@@ -19,3 +19,6 @@ dist/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Mosquitto password file (made on the server)
+deploy/mosquitto/passwords

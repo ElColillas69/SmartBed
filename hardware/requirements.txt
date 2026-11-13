@@ -1,7 +1,8 @@
-# Partly generated with Claude (Anthropic, 2026): gpiozero, paho-mqtt and python-dotenv added.
+# Partly generated with Claude (Anthropic, 2026): gpiozero, paho-mqtt, python-dotenv and spidev added.
 adafruit-circuitpython-dht==4.0.12
 pigpio==1.78
 pigpio-dht==0.3.6
 gpiozero>=2.0
 paho-mqtt>=2.0
 python-dotenv>=1.0
+spidev>=3.6

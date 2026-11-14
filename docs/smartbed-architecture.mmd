@@ -1,0 +1,48 @@
+%% SmartBed G-CA2 architecture. Edit at https://mermaid.live or in VS Code (Mermaid extension).
+flowchart TB
+  classDef dev fill:#e8f4ea,stroke:#2e7d32,color:#1b1b1b
+  classDef srv fill:#e7effb,stroke:#1f5fbf,color:#1b1b1b
+  classDef data fill:#fff4e0,stroke:#c77700,color:#1b1b1b
+  classDef user fill:#f3e8fb,stroke:#7b3fb3,color:#1b1b1b
+  classDef gap fill:#fde8e8,stroke:#c62828,color:#7f1010,stroke-dasharray: 5 3
+  classDef sec fill:#f5f5f5,stroke:#616161,color:#1b1b1b
+
+  subgraph BED["IoT edge: the bed (real hardware)"]
+    direction TB
+    DHT["DHT22<br/>temperature + humidity"]:::dev
+    FSR["FSR402<br/>pressure / occupancy"]:::dev
+    PI["Raspberry Pi Zero<br/>hardware/main.py<br/>MQTT client (paho)"]:::dev
+    BUZ["Buzzer<br/>alarm output"]:::dev
+    LED["LED<br/>heater stand-in"]:::dev
+    DHT -- GPIO --> PI
+    FSR -- "GPIO / ADC" --> PI
+    PI -- GPIO --> BUZ
+    PI -- GPIO --> LED
+  end
+
+  subgraph AWS["AWS EC2: smartbed.ksander.online, all in Docker Compose"]
+    direction TB
+    MQ["Mosquitto 2 broker<br/>MQTT port 1883<br/>no anonymous logins<br/>password file + per-topic ACL"]:::srv
+    SIM["Simulator container<br/>simulate.py<br/>2 fake beds"]:::srv
+    API["FastAPI server :8000<br/>REST /api/*<br/>MQTT subscriber + publisher<br/>JWT auth, argon2 password hashes<br/>alarm + heater logic"]:::srv
+    DB[("PostgreSQL 16<br/>account, bed, device,<br/>reading, alarm, settings<br/>no public port")]:::data
+    CADDY["Caddy 2 reverse proxy<br/>ports 80 / 443<br/>automatic HTTPS (Let's Encrypt)<br/>serves the React build"]:::srv
+    SIM -- "publishes readings<br/>for its 2 beds" --> MQ
+    MQ -- "SUBSCRIBE<br/>smartbed/+/readings" --> API
+    API -- "PUBLISH<br/>smartbed/&lt;id&gt;/commands" --> MQ
+    API -- "SQL (internal network)" --> DB
+    CADDY -- "/api/* → api:8000" --> API
+  end
+
+  subgraph USERS["Users"]
+    BROWSER["Web browser<br/>React dashboard<br/>Login, Tonight, Sleep,<br/>Alarms, Settings"]:::user
+  end
+
+  PI == "PUBLISH readings + status<br/>smartbed/&lt;device_id&gt;/readings (JSON, QoS 1)<br/>smartbed/&lt;device_id&gt;/status (online/offline)" ==> MQ
+  MQ == "smartbed/&lt;device_id&gt;/commands<br/>heater on/off, buzzer (retained)" ==> PI
+  BROWSER == "HTTPS 443<br/>login → JWT, then Bearer token" ==> CADDY
+
+  SEC["<b>Security</b><br/>• MQTT: every device has its own login (username = device_id)<br/>• ACL: a device may only write its own /readings and read its own /commands<br/>• Server and simulator have separate logins with limited ACLs<br/>• Web: accounts linked to beds; API checks JWT + bed access per request<br/>• HTTPS via Caddy; Postgres not exposed; secrets in deploy/.env, not in git"]:::sec
+  GAP["<b>Known gap</b><br/>MQTT on 1883 is plain text (no TLS).<br/>Next step: TLS listener on 8883<br/>using Caddy's certificate"]:::gap
+  BROWSER ~~~ SEC
+  MQ ~~~ GAP

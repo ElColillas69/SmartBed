@@ -15,11 +15,18 @@ services:
   mqtt:
     image: eclipse-mosquitto:2
     restart: unless-stopped
-    ports: ["1883:1883"]                 # MQTT for the Pi (username + password required)
+    # 8883 = MQTT over TLS for the Pi. 1883 stays inside Docker (not published).
+    # Docs: https://docs.docker.com/reference/compose-file/services/#ports
+    ports: ["8883:8883"]
+    environment:
+      DOMAIN: ${DOMAIN}
+    entrypoint: ["/bin/sh", "/mosquitto/config/start.sh"]   # copies Caddy's cert, then runs Mosquitto
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - ./mosquitto/aclfile:/mosquitto/config/aclfile:ro
       - ./mosquitto/passwords:/mosquitto/config/passwords:ro
+      - ./mosquitto/start.sh:/mosquitto/config/start.sh:ro
+      - caddy-data:/caddy:ro              # Caddy's Let's Encrypt certificate (read-only)
 
   api:
     build: ../backend-fastapi

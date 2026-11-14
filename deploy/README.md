@@ -1,7 +1,7 @@
 # Deploying SmartBed to a cloud VM
 
 Generated with Claude (Anthropic, 2026). The full stack below was run end to end with
-Docker (Pi-style MQTT publish on 1883 -> API -> PostgreSQL -> HTTPS API, and commands
+Docker (Pi-style MQTT publish on 8883 with TLS -> API -> PostgreSQL -> HTTPS API, and commands
 back to the Pi).
 
 What runs where:
@@ -9,14 +9,14 @@ What runs where:
 | Container  | What it is                                        | Reachable from the internet |
 |------------|---------------------------------------------------|-----------------------------|
 | caddy      | builds the React app; HTTPS for it and `/api/*`   | 80, 443                     |
-| mqtt       | Mosquitto broker (login + per-device ACL)         | 1883                        |
+| mqtt       | Mosquitto broker (TLS, login + per-device ACL)    | 8883 (1883 only inside Docker) |
 | api        | FastAPI + the MQTT subscriber                     | no (only via Caddy)         |
 | simulator  | fake Pis for Patrick's and Siobhan's beds         | no                          |
 | db         | PostgreSQL                                        | no                          |
 
 ## 1. VM and domain
 
-Any small Ubuntu VM (we use AWS EC2). Open ports 22, 80, 443 and 1883 in its security
+Any small Ubuntu VM (we use AWS EC2). Open ports 22, 80, 443 and 8883 in its security
 group. Point the domain (`smartbed.ksander.online`, Cloudflare "DNS only") at the VM's
 Elastic IP. Install Docker: https://docs.docker.com/engine/install/ubuntu/
 
@@ -69,5 +69,7 @@ cd deploy && docker compose up -d --build
 - The seed's pairing codes (`MAUREEN1`...) are guessable. On a public server, change them
   in the database or in `seed.py` to random ones.
 - Don't run `seed.py --demo-user` in the cloud (it makes a known password).
-- MQTT on 1883 is not encrypted (the lab setup). Every client still needs a password and
-  the ACL keeps each Pi to its own topics. The upgrade is a TLS listener on 8883.
+- MQTT from the internet is TLS on 8883, with Caddy's Let's Encrypt certificate
+  (`mosquitto/start.sh` copies it in). Caddy renews it before it expires; run
+  `docker compose restart mqtt` after a renewal so Mosquitto loads the new one.
+  The API and simulator use plain 1883 on the private Docker network, which is not published.

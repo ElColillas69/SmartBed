@@ -15,7 +15,7 @@ This was made for the G-CA2 IoT assignment.
 
 ## Architecture
 
-![SmartBed architecture](docs/smartbed-architecture.png)
+![SmartBed architecture](docs/Architecture/smartbed-architecture.png)
 
 The source of the diagram is [`docs/smartbed-architecture.mmd`](docs/smartbed-architecture.mmd) (Mermaid).
 

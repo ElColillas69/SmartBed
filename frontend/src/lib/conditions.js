@@ -9,13 +9,6 @@ export function lastChange(readings) {
   return { occupied: current, since: parseTime(since.recorded_at), sinceKnown: flip !== -1 }
 }
 
-export function lightLabel(raw, threshold) {
-  if (raw == null) return '—'
-  if (raw > threshold) return 'Bright'
-  if (raw > threshold * 0.4) return 'Dim'
-  return 'Dark'
-}
-
 // Turn the latest data into things a caretaker should notice, most urgent first.
 // Readings older than this are no longer treated as the current state of the room.
 export const STALE_MINUTES = 5
@@ -73,10 +66,6 @@ export function deriveConditions({ latest, readings, commands, care, heating, no
   }
   if (latest.humidity_percent > care.humidityLimit) {
     out.push({ id: 'humid', level: 'warning', title: `Humidity ${is} high`, detail: `${reading(`${Math.round(latest.humidity_percent)}%`)}, above the ${care.humidityLimit}% limit.` })
-  }
-  // commands are re-evaluated against current settings; the stored flag is not
-  if (commands ? commands.light_warning : latest.light_warning) {
-    out.push({ id: 'light', level: 'warning', title: 'Room light is on', detail: 'Light is above the warning threshold.' })
   }
 
   const rank = { critical: 0, warning: 1, info: 2 }

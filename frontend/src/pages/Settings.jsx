@@ -4,7 +4,6 @@ import { Card, PageHead, Switch } from '../components/ui'
 import { api } from '../lib/api'
 import { useBed } from '../lib/BedData'
 import { CARE_DEFAULTS } from '../lib/care'
-import { lightLabel } from '../lib/conditions'
 import ThemeSwitch from '../components/ThemeSwitch'
 import ClaimBed from '../components/ClaimBed'
 import { useSession } from '../lib/Session'
@@ -14,10 +13,11 @@ function BedSettings() {
   const [draft, setDraft] = useState(null)
   useEffect(() => { if (prefs.data && !draft) setDraft(prefs.data) }, [prefs.data, draft])
   if (!draft) return <div className="skeleton" />
-  const current = live.data?.latest?.light_level
-  const dirty = JSON.stringify(draft) !== JSON.stringify(prefs.data)
+  // Only the fields this card edits; the bed has no light sensor, so no light threshold is sent.
+  const edited = ({ heating_enabled, target_temperature_c }) => ({ heating_enabled, target_temperature_c })
+  const dirty = JSON.stringify(edited(draft)) !== JSON.stringify(edited(prefs.data))
 
-  const save = () => act(() => api.updatePreferences(draft), 'Bed settings saved', prefs.refresh, live.refresh)
+  const save = () => act(() => api.updatePreferences(edited(draft)), 'Bed settings saved', prefs.refresh, live.refresh)
 
   return (
     <Card title="The bed">
@@ -31,14 +31,6 @@ function BedSettings() {
           <label htmlFor="target">Target temperature · <span className="tabular">{draft.target_temperature_c.toFixed(1)}°C</span></label>
           <input id="target" type="range" min={15} max={30} step={0.5} value={draft.target_temperature_c}
             onChange={(e) => setDraft({ ...draft, target_temperature_c: Number(e.target.value) })} />
-        </div>
-      </div>
-      <div className="row">
-        <div className="field grow">
-          <label htmlFor="light">Light warning above · <span className="tabular">{draft.light_warning_threshold}</span></label>
-          <input id="light" type="range" min={0} max={1023} step={1} value={draft.light_warning_threshold}
-            onChange={(e) => setDraft({ ...draft, light_warning_threshold: Number(e.target.value) })} />
-          <span className="hint">Raw sensor value (0–1023), not lux.{current != null && ` Right now the room reads ${current}, which counts as “${lightLabel(current, draft.light_warning_threshold)}”.`}</span>
         </div>
       </div>
       <div className="row end">

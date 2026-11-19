@@ -6,7 +6,7 @@ import { agoText, isWithinWindow, minutesText, nextAlarm, parseTime } from './ti
 const at = (iso) => new Date(iso)
 const reading = (minutesAgo, occupied, now, extra = {}) => ({
   recorded_at: new Date(now - minutesAgo * 60000).toISOString(), occupied,
-  temperature_c: 20, humidity_percent: 50, light_level: 50, light_warning: false, ...extra,
+  temperature_c: 20, humidity_percent: 50, ...extra,
 })
 
 describe('time helpers', () => {
@@ -56,6 +56,12 @@ describe('conditions', () => {
     const readings = [reading(30, true, now, { temperature_c: 16, humidity_percent: 80 })]
     const ids = deriveConditions({ latest: readings[0], readings, care: CARE_DEFAULTS, now }).map((c) => c.id)
     expect(ids).toEqual(expect.arrayContaining(['stale', 'cold', 'humid']))
+  })
+  it('never raises a light warning (the bed has no light sensor)', () => {
+    const readings = [reading(0, true, now, { light_level: 1000, light_warning: true })]
+    const commands = { buzzer_on: false, light_warning: true }
+    const ids = deriveConditions({ latest: readings[0], readings, commands, care: CARE_DEFAULTS, now }).map((c) => c.id)
+    expect(ids).not.toContain('light')
   })
   it('describes temperature against the preferred range, with the heater target', () => {
     const readings = [reading(0, true, now, { temperature_c: 16.4 })]

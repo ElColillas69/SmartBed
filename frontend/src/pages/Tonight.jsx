@@ -4,7 +4,7 @@ import { GoalBar, OccupancyStrip, Sparkline } from '../components/charts'
 import Conditions from '../components/Conditions'
 import { api } from '../lib/api'
 import { useBed } from '../lib/BedData'
-import { isStale, lastChange, lightLabel, tempRange } from '../lib/conditions'
+import { isStale, lastChange, tempRange } from '../lib/conditions'
 import { ago, agoText, clock, duration, nextAlarm, parseTime } from '../lib/time'
 import NoData from './NoData'
 
@@ -118,10 +118,6 @@ export default function Tonight() {
         <Readout label="Humidity" value={Math.round(latest.humidity_percent)} unit="%"
           note={`Flag above ${care.humidityLimit}%`}>
           <Sparkline label="Humidity, last 8 hours" points={series('humidity_percent')} minSpan={30} />
-        </Readout>
-        <Readout label="Light" value={lightLabel(latest.light_level, pref?.light_warning_threshold ?? 800)}
-          note={`Sensor reads ${latest.light_level} of 1023`}>
-          <Sparkline label="Light level, last 8 hours" points={series('light_level')} color="var(--amber)" minSpan={200} />
         </Readout>
       </section>
 

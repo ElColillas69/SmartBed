@@ -25,7 +25,7 @@ if __name__ == "__main__":
     print(f"Blinking the heater LED on GPIO {pin}. Press CTRL+C to stop.")
     try:
         while True:
-            heater.set(Trrue)
+            heater.set(True)
             sleep(0.5)
             heater.set(False)
             sleep(0.5)

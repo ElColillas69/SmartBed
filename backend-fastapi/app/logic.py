@@ -62,6 +62,7 @@ def summarise_nights(rows, tz):
             "in_bed_minutes": round(asleep.total_seconds() / 60),
             "bed_exits": exits,
             "avg_temperature_c": round(sum(r.temperature_c for r in occupied) / len(occupied), 1),
+            "avg_humidity_percent": round(sum(r.humidity_percent for r in occupied) / len(occupied), 1),  # for the weekly report
             "in_progress": night == latest and samples[-1].occupied and fresh,
         })
     return result

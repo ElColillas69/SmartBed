@@ -2,6 +2,7 @@ import { Card, PageHead } from '../components/ui'
 import { useBed } from '../lib/BedData'
 import { clock, duration, nightLabel, parseTime } from '../lib/time'
 import NoData from './NoData'
+import { NightsTabs } from './WeekReport'
 
 function averageClock(dates) {
   if (!dates.length) return null
@@ -15,12 +16,12 @@ function averageClock(dates) {
 
 export default function Sleep() {
   const { nights, care } = useBed()
-  if (!nights.data) return <NoData state={nights} />
+  if (!nights.data) return <><NightsTabs /><NoData state={nights} /></>
   const goal = care.sleepGoalMinutes
   const done = nights.data.filter((n) => !n.in_progress)
   const list = [...nights.data].reverse()
 
-  if (!list.length) return <><PageHead title="No nights recorded yet" /><NoData empty /></>
+  if (!list.length) return <><NightsTabs /><PageHead title="No nights recorded yet" /><NoData empty /></>
 
   const avg = done.length ? done.reduce((a, n) => a + n.in_bed_minutes, 0) / done.length : null
   const exits = done.reduce((a, n) => a + n.bed_exits, 0)
@@ -30,6 +31,7 @@ export default function Sleep() {
 
   return (
     <>
+      <NightsTabs />
       <PageHead kicker={`Goal ${duration(goal)} a night`} title={`The last ${list.length} nights`} />
 
       <dl className="facts summary">

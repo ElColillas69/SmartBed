@@ -8,6 +8,7 @@ import { isStale } from './lib/conditions'
 import { useSession } from './lib/Session'
 import Tonight from './pages/Tonight'
 import Sleep from './pages/Sleep'
+import WeekReport from './pages/WeekReport'
 import Alarms from './pages/Alarms'
 import Settings from './pages/Settings'
 
@@ -56,7 +57,7 @@ export default function App() {
         <BedSwitcher />
         <nav className="nav" aria-label="Main">
           {NAV.map(({ to, label }) => (
-            <NavLink key={to} to={to} end>
+            <NavLink key={to} to={to} end={to === '/'}>
               {label}
               {to === '/' && urgent > 0 && <span className="badge">{urgent}</span>}
             </NavLink>
@@ -73,6 +74,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Tonight />} />
           <Route path="/sleep" element={<Sleep />} />
+          <Route path="/sleep/week" element={<WeekReport />} />
           <Route path="/alarms" element={<Alarms />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Tonight />} />
@@ -81,7 +83,7 @@ export default function App() {
 
       <nav className="tabbar" aria-label="Main">
         {NAV.map(({ to, label, icon: Icon }) => (
-          <NavLink key={to} to={to} end>
+          <NavLink key={to} to={to} end={to === '/'}>
             <Icon size={20} strokeWidth={1.75} />{label}
             {to === '/' && urgent > 0 && <span className="badge">{urgent}</span>}
           </NavLink>

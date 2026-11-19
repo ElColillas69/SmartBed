@@ -135,6 +135,7 @@ def test_nights_summary(client):
                                                     recorded_at=start + timedelta(minutes=5 * i)))
     nights = client.get(f"/api/beds/{bed_id}/sleep/nights", headers=h).json()
     assert len(nights) == 1 and nights[0]["bed_exits"] == 1
+    assert nights[0]["avg_humidity_percent"] == 50     # used by the weekly report
 
 
 def test_claim_with_generated_code(client):

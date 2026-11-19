@@ -2,6 +2,7 @@
 """Create the beds, their devices and settings, plus some history.
 
     python seed.py                 beds + 3 nights of fake history
+    python seed.py --days 21       beds + 21 nights (enough for the weekly report to compare weeks)
     python seed.py --demo-user     also create carer@example.com / password123 with access to every bed
     python seed.py --no-history    beds only (use this in the cloud)
 
@@ -51,12 +52,13 @@ with SessionLocal() as db:
 
     if "--no-history" not in sys.argv and db.scalar(select(Reading).limit(1)) is None:
         tz = ZoneInfo("Europe/Dublin")
-        start = now_utc() - timedelta(days=3)
+        days = int(sys.argv[sys.argv.index("--days") + 1]) if "--days" in sys.argv else 3
+        start = now_utc() - timedelta(days=days)
         for _, _, device_id, _ in BEDS:
             temperature = 19.5
             when = start
-            while when < now_utc():                  # every 5 minutes for 3 days
+            while when < now_utc():                  # every 5 minutes
                 data, temperature = fake_reading(when.astimezone(tz), temperature)
                 save_reading(db, device_id, ReadingIn(**data, recorded_at=when))
                 when += timedelta(minutes=5)
-        print("Added 3 days of fake readings")
+        print(f"Added {days} days of fake readings")

@@ -1,5 +1,5 @@
 # Partly generated with Claude (Anthropic, 2026): Adrian's sensor loop (DHT22 + FSR402)
-# merged with the MQTT publisher/subscriber.
+# merged with the MQTT publisher/subscriber.os
 """Runs on Maureen's Pi Zero.
 
 Reads the FSR402 (bed pressure, through the MCP3008) every FSR402_INTERVAL_SECONDS and
@@ -35,6 +35,11 @@ from sensors.dht22 import DHT22Sensor     # noqa: E402
 from sensors.fsr402 import FSR402         # noqa: E402
 from sensors.occupancy import OccupancyFilter
 
+from sensors.dht_freshness import (
+    valid_dht_reading,
+    dht_reading_is_fresh
+)
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("smartbed-pi")
 
@@ -42,6 +47,16 @@ DEVICE_ID = os.getenv("DEVICE_ID", "pi-maureen")
 # Short intervals for testing; for real use e.g. DHT22 600 s and publish 300 s.
 FSR402_INTERVAL = float(os.getenv("FSR402_INTERVAL_SECONDS", "5"))
 DHT22_INTERVAL = float(os.getenv("DHT22_INTERVAL_SECONDS", "30"))
+# Stop reusing DHT22 readings after three sampling intervals.
+DHT_MAX_AGE = float(
+    os.getenv(
+        "DHT_MAX_AGE_SECONDS",
+        str(DHT22_INTERVAL * 3)
+    )
+)
+
+if DHT_MAX_AGE <= 0:
+    raise ValueError("DHT_MAX_AGE_SECONDS must be positive")
 PUBLISH_EVERY = float(os.getenv("PUBLISH_EVERY_SECONDS", "30"))
 # Pressure signal (0-100 %) above which we count the bed as occupied. Tune it on the real bed.
 OCCUPIED_THRESHOLD = float(os.getenv("OCCUPIED_THRESHOLD_PERCENT", "20"))
@@ -108,6 +123,7 @@ def main() -> None:
     client.loop_start()
 
     latest_dht = None          # {"temperature_c": .., "humidity_percent": ..}
+    last_good_dht_at = None
     occupied = None
     pressure_percent = 0.0
     now = time.monotonic()
@@ -119,12 +135,42 @@ def main() -> None:
             now = time.monotonic()
 
             if now >= next_dht:
-                reading = dht.read()                   # None if the DHT22 read failed
-                if reading is None:
-                    log.warning("DHT22 read failed, keeping the last reading")
-                else:
+
+                # Was the previous measurement already stale?
+                previously_stale = not dht_reading_is_fresh(
+                    last_good_dht_at,
+                    now,
+                    DHT_MAX_AGE
+                )
+
+                # Read temperature and humidity.
+                reading = dht.read()
+
+                if valid_dht_reading(reading):
+
                     latest_dht = reading
+
+                    # Record the actual successful read time.
+                    last_good_dht_at = time.monotonic()
+
+                    log.info(
+                        "DHT22: temperature=%s°C humidity=%s%%",
+                        reading["temperature_c"],
+                        reading["humidity_percent"]
+                    )
+
+                    # Resume publishing promptly after recovery.
+                    if previously_stale:
+                        next_publish = now
+
+                else:
+                    log.warning(
+                        "DHT22 reading failed or returned "
+                        "invalid data"
+                    )
+
                 next_dht = now + DHT22_INTERVAL
+
 
            
             if now >= next_fsr:
@@ -159,18 +205,55 @@ def main() -> None:
                 next_fsr = now + FSR402_INTERVAL
 
 
-            if now >= next_publish and latest_dht is not None and occupied is not None:
-                # The server expects one flat reading, so the nested sensor data is mapped here.
-                payload = {
-                    "recorded_at": get_timestamp(),
-                    "occupied": occupied,
-                    "temperature_c": latest_dht["temperature_c"],
-                    "humidity_percent": latest_dht["humidity_percent"],
-                    "light_level": LIGHT_LEVEL,
-                }
-                client.publish(READINGS, json.dumps(payload), qos=1)
-                log.info("Published %s (pressure %s%%)", payload, pressure_percent)
+           
+            if now >= next_publish:
+
+                dht_fresh = dht_reading_is_fresh(
+                    last_good_dht_at,
+                    now,
+                    DHT_MAX_AGE
+                )
+
+                if occupied is None:
+                    log.debug(
+                        "Skipping publish: occupancy not confirmed"
+                    )
+
+                elif latest_dht is None or not dht_fresh:
+                    log.warning(
+                        "Skipping MQTT publish: DHT22 "
+                        "temperature/humidity data is stale"
+                    )
+
+                else:
+                    payload = {
+                        "recorded_at": get_timestamp(),
+                        "occupied": occupied,
+                        "temperature_c": latest_dht[
+                            "temperature_c"
+                        ],
+                        "humidity_percent": latest_dht[
+                            "humidity_percent"
+                        ],
+                        "light_level": LIGHT_LEVEL,
+                    }
+
+                    client.publish(
+                        READINGS,
+                        json.dumps(payload),
+                        qos=1
+                    )
+
+                    log.info(
+                        "Published %s (pressure %.2f%%)",
+                        payload,
+                        pressure_percent
+                    )
+
+                # Schedule the next attempt even if data is stale.
+                # This prevents repeated warnings every 0.1 seconds.
                 next_publish = now + PUBLISH_EVERY
+
 
             if now - last_command > COMMAND_TIMEOUT:
                 heater.set(False)                      # fail-safe: heater off when out of touch

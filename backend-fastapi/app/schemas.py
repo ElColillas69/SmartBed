@@ -5,7 +5,7 @@ Think of these as DTOs with validation attributes (like [Required]/[Range] in C#
 The SQLAlchemy classes in models.py are the database rows; these are the JSON.
 Docs: https://docs.pydantic.dev/latest/concepts/models/
 """
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, StrictBool, field_validator
@@ -128,8 +128,27 @@ class AlarmOut(BaseModel):
 
 # ---------- what the Pi should do right now ----------
 
+
+# Commands sent from FastAPI to the Raspberry Pi.
+
+def command_expiry():
+    return datetime.now(timezone.utc) + timedelta(seconds=90)
+
+
 class Commands(BaseModel):
-    heating_led_on: bool
-    light_warning: bool
-    buzzer_on: bool
+    # Timestamp when the backend created the instruction.
+    issued_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+    # Commands expire after approximately 90 seconds.
+    expires_at: datetime = Field(
+        default_factory=command_expiry
+    )
+
+    # Require actual booleans, not strings or numbers.
+    heating_led_on: StrictBool
+    light_warning: StrictBool
+    buzzer_on: StrictBool
+
     due_alarm_ids: list[str]

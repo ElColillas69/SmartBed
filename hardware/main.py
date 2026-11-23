@@ -34,6 +34,7 @@ from actuators.leds import HeaterLED      # noqa: E402
 from sensors.dht22 import DHT22Sensor     # noqa: E402
 from sensors.fsr402 import FSR402         # noqa: E402
 from sensors.occupancy import OccupancyFilter
+from commands import decode_command
 
 from sensors.dht_freshness import (
     valid_dht_reading,
@@ -92,6 +93,12 @@ def main() -> None:
     buzzer = AlarmBuzzer(int(os.getenv("BUZZER_PIN", "27")))
     last_command = time.monotonic()
 
+    # Track the newest command accepted by the Pi.
+    latest_command_issued = None
+
+    # Track when the accepted command expires.
+    command_expires_at = None
+
     def on_connect(client, userdata, flags, reason_code, properties):
         if reason_code.is_failure:
             log.error("Broker refused the connection: %s", reason_code)
@@ -100,16 +107,40 @@ def main() -> None:
         client.subscribe(COMMANDS, qos=1)              # (re)subscribe after every reconnect
         client.publish(STATUS, "online", qos=1, retain=True)
 
+    
     def on_message(client, userdata, msg):
         nonlocal last_command
+        nonlocal latest_command_issued
+        nonlocal command_expires_at
+
         try:
-            commands = json.loads(msg.payload)
-            heater.set(bool(commands["heating_led_on"]))
-            buzzer.set(bool(commands["buzzer_on"]))
+            # Validate command before touching GPIO.
+            commands, issued, expires = decode_command(
+                msg.payload,
+                previous_issued=latest_command_issued
+            )
+
+            # Only validated booleans reach the actuators.
+            heater.set(commands["heating_led_on"])
+            buzzer.set(commands["buzzer_on"])
+
+            # Save accepted command information.
+            latest_command_issued = issued
+            command_expires_at = expires
             last_command = time.monotonic()
-            log.info("Commands: heater=%s buzzer=%s", commands["heating_led_on"], commands["buzzer_on"])
-        except (ValueError, KeyError) as err:
-            log.warning("Ignored bad command %r: %s", msg.payload, err)
+
+            log.info(
+                "Validated MQTT command: heater=%s buzzer=%s",
+                commands["heating_led_on"],
+                commands["buzzer_on"]
+            )
+
+        except ValueError as err:
+            log.warning(
+                "Rejected unsafe MQTT command: %s",
+                err
+            )
+
 
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=DEVICE_ID)
     client.username_pw_set(os.getenv("MQTT_USERNAME", DEVICE_ID), os.getenv("MQTT_PASSWORD"))
@@ -255,8 +286,21 @@ def main() -> None:
                 next_publish = now + PUBLISH_EVERY
 
 
-            if now - last_command > COMMAND_TIMEOUT:
-                heater.set(False)                      # fail-safe: heater off when out of touch
+          
+            # Turn outputs off if the server stops sending commands
+            # or the last accepted command has expired.
+            timed_out = (
+                now - last_command > COMMAND_TIMEOUT
+            )
+
+            expired = (
+                command_expires_at is not None
+                and datetime.now(timezone.utc)
+                >= command_expires_at
+            )
+
+            if timed_out or expired:
+                heater.set(False)
                 buzzer.set(False)
 
             time.sleep(0.1)

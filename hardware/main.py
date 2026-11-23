@@ -35,6 +35,7 @@ from sensors.dht22 import DHT22Sensor     # noqa: E402
 from sensors.fsr402 import FSR402         # noqa: E402
 from sensors.occupancy import OccupancyFilter
 from commands import decode_command
+from sensors.fsr_quality import valid_fsr_raw, fsr_is_fresh
 
 from sensors.dht_freshness import (
     valid_dht_reading,
@@ -47,6 +48,18 @@ log = logging.getLogger("smartbed-pi")
 DEVICE_ID = os.getenv("DEVICE_ID", "pi-maureen")
 # Short intervals for testing; for real use e.g. DHT22 600 s and publish 300 s.
 FSR402_INTERVAL = float(os.getenv("FSR402_INTERVAL_SECONDS", "5"))
+FSR_MAX_AGE = float(
+    os.getenv(
+        "FSR_MAX_AGE_SECONDS",
+        str(max(30, FSR402_INTERVAL * 3))
+    )
+)
+
+if FSR_MAX_AGE <= FSR402_INTERVAL:
+    raise ValueError(
+        "FSR_MAX_AGE_SECONDS must exceed FSR402_INTERVAL_SECONDS"
+    )
+
 DHT22_INTERVAL = float(os.getenv("DHT22_INTERVAL_SECONDS", "30"))
 # Stop reusing DHT22 readings after three sampling intervals.
 DHT_MAX_AGE = float(
@@ -156,6 +169,7 @@ def main() -> None:
     latest_dht = None          # {"temperature_c": .., "humidity_percent": ..}
     last_good_dht_at = None
     occupied = None
+    last_good_fsr_at = None
     pressure_percent = 0.0
     now = time.monotonic()
     next_fsr = next_dht = next_publish = now
@@ -204,59 +218,114 @@ def main() -> None:
 
 
            
+           
             if now >= next_fsr:
-                # Step 1: Read the FSR402 pressure sensor.
-                raw = fsr.read_raw()
 
-                # Step 2: Convert the raw ADC reading
-                # into a percentage (0-100%).
-                pressure_percent = round(
-                    (raw / 1023) * 100,
-                    2
-                )
+                # Reset occupancy if sensor readings expired.
+                if (
+                    occupied is not None
+                    and not fsr_is_fresh(
+                        last_good_fsr_at,
+                        now,
+                        FSR_MAX_AGE
+                    )
+                ):
+                    log.warning(
+                        "FSR402 data expired: occupancy unknown"
+                    )
+                    occupied = None
+                    pressure_filter.reset()
 
-                # Step 3: Apply hysteresis and confirmation
-                # sampling to reduce false occupancy changes.
-                occupied, changed = pressure_filter.update(
-                    pressure_percent
-                )
+                # Attempt to read the pressure sensor.
+                try:
+                    raw = fsr.read_raw()
 
-                # Step 4: Only publish immediately when
-                # a new occupancy state has been confirmed.
-                if changed and occupied is not None:
-                    log.info(
-                        "Bed %s (pressure %.2f%%)",
-                        "occupied" if occupied else "empty",
+                except (OSError, ValueError, IndexError) as error:
+                    log.warning(
+                        "FSR402 read failed: %s",
+                        error
+                    )
+                    raw = None
+
+                if valid_fsr_raw(raw):
+
+                    # Record the successful measurement.
+                    last_good_fsr_at = now
+
+                    pressure_percent = round(
+                        (raw / 1023) * 100,
+                        2
+                    )
+
+                    occupied, changed = pressure_filter.update(
                         pressure_percent
                     )
 
-                    next_publish = now
+                    if changed and occupied is not None:
+                        log.info(
+                            "Bed %s (pressure %.2f%%)",
+                            "occupied" if occupied else "empty",
+                            pressure_percent
+                        )
 
-                # Step 5: Schedule the next pressure reading.
+                        next_publish = now
+
+                else:
+                    # Do not trust the previous occupancy state.
+                    log.warning(
+                        "FSR402 returned invalid pressure data"
+                    )
+
+                    occupied = None
+                    last_good_fsr_at = None
+
+                    # Require confirmation after recovery.
+                    pressure_filter.reset()
+
+                # Continue sampling after failures.
                 next_fsr = now + FSR402_INTERVAL
 
 
            
             if now >= next_publish:
-
                 dht_fresh = dht_reading_is_fresh(
                     last_good_dht_at,
                     now,
                     DHT_MAX_AGE
                 )
 
-                if occupied is None:
+                fsr_fresh = fsr_is_fresh(
+                    last_good_fsr_at,
+                    now,
+                    FSR_MAX_AGE
+                )
+
+                # Do not publish outdated pressure readings.
+                if not fsr_fresh:
+                    if occupied is not None:
+                        occupied = None
+                        pressure_filter.reset()
+
+                    log.warning(
+                        "Skipping MQTT publish: pressure sensor "
+                        "data is unavailable or stale"
+                    )
+
+                # Wait until occupancy has been confirmed.
+                elif occupied is None:
                     log.debug(
                         "Skipping publish: occupancy not confirmed"
                     )
 
+                # Do not publish outdated temperature readings.
                 elif latest_dht is None or not dht_fresh:
                     log.warning(
-                        "Skipping MQTT publish: DHT22 "
-                        "temperature/humidity data is stale"
+                        "Skipping MQTT publish: DHT22 data "
+                        "is unavailable or stale"
                     )
 
                 else:
+                    # Both sensors are valid and fresh.
                     payload = {
                         "recorded_at": get_timestamp(),
                         "occupied": occupied,
@@ -281,8 +350,7 @@ def main() -> None:
                         pressure_percent
                     )
 
-                # Schedule the next attempt even if data is stale.
-                # This prevents repeated warnings every 0.1 seconds.
+                # Schedule the next attempt regardless of outcome.
                 next_publish = now + PUBLISH_EVERY
 
 

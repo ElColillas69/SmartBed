@@ -80,3 +80,15 @@ class OccupancyFilter:
         self.count = 0
 
         return self.state, True
+
+    
+    def reset(self):
+        """
+        Reset occupancy when sensor data becomes unreliable.
+
+        Require fresh confirmation samples after recovery.
+        """
+        self.state = None
+        self.candidate = None
+        self.count = 0
+

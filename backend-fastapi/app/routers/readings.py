@@ -28,17 +28,49 @@ def latest(bed_id: str = Depends(allowed_bed), db: Session = Depends(get_db)):
     return db.scalar(newest_first(bed_id).limit(1))
 
 
+
+
 @router.get("/readings", response_model=list[ReadingOut])
-def readings(bed_id: str = Depends(allowed_bed), db: Session = Depends(get_db),
-             minutes: int | None = Query(None, ge=1, le=1440),
-             limit: int = Query(50, ge=1, le=500)):
+def readings(
+    bed_id: str = Depends(allowed_bed),
+    db: Session = Depends(get_db),
+    minutes: int | None = Query(None, ge=1, le=1440),
+    limit: int = Query(50, ge=1, le=500)
+):
+    """
+    Return historical sensor readings for a bed.
+
+    Limits database queries to prevent excessive
+    memory usage and returns an empty list when
+    no readings exist within the requested period.
+    """
+
     query = newest_first(bed_id)
+
+    # Return the latest readings if no time range is selected.
     if minutes is None:
-        return db.scalars(query.limit(limit)).all()
+        return db.scalars(
+            query.limit(limit)
+        ).all()
+
+    # Calculate the requested time window.
     since = now_utc() - timedelta(minutes=minutes)
-    rows = db.scalars(query.where(Reading.recorded_at >= since)).all()
-    step = max(1, math.ceil(len(rows) / limit))      # thin out to at most `limit`
-    return rows[::step] or db.scalars(query.limit(1)).all()
+
+    # Fetch a maximum of 5000 records.
+    rows = db.scalars(
+        query
+        .where(Reading.recorded_at >= since)
+        .limit(5000)
+    ).all()
+
+    # No readings in the selected time window.
+    if not rows:
+        return []
+
+    # Reduce the results to the requested number.
+    step = max(1, math.ceil(len(rows) / limit))
+
+    return rows[::step]
 
 
 @router.get("/sleep/nights")

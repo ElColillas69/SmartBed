@@ -150,6 +150,7 @@ def test_claim_with_generated_code(client):
     assert client.post("/api/beds/claim", json={"pairing_code": code}, headers=h).status_code == 200
 
 
+
 def test_duplicate_mqtt_delivery_is_idempotent(client):
     from sqlalchemy import func, select
     from app.models import Reading, now_utc
@@ -163,18 +164,69 @@ def test_duplicate_mqtt_delivery_is_idempotent(client):
             reading(recorded_at=timestamp)
         )
 
+        print("\nIncoming timestamp:", repr(timestamp))
+        print("Stored timestamp:", repr(first.recorded_at))
+
+        existing = db.scalar(
+            select(Reading)
+            .where(
+                Reading.bed_id == first.bed_id,
+                Reading.recorded_at == timestamp
+            )
+            .limit(1)
+        )
+
+        print(
+            "Exact database match:",
+            existing.id if existing else None
+        )
+
         second = save_reading(
             db,
             "pi-maureen",
             reading(recorded_at=timestamp)
         )
 
-        # Both deliveries should reference one reading.
-        assert first.id == second.id
+        print("First reading ID:", first.id)
+        print("Second reading ID:", second.id)
 
-        # Only one database row should exist.
         count = db.scalar(
             select(func.count()).select_from(Reading)
         )
 
+        print("Total readings:", count)
+
+        assert first.id == second.id
         assert count == 1
+
+
+def test_empty_readings_window_returns_no_old_data(client):
+    """
+    An empty time window must not return an
+    older reading from outside the requested period.
+    """
+    from datetime import timedelta
+    from app.models import now_utc
+
+    headers = login(client)
+    bed_id = claim(client, headers)
+
+    # Store a reading from two days ago.
+    old_timestamp = now_utc() - timedelta(days=2)
+
+    with SessionLocal() as db:
+        save_reading(
+            db,
+            "pi-maureen",
+            reading(recorded_at=old_timestamp)
+        )
+
+    # Request only the last 10 minutes.
+    response = client.get(
+        f"/api/beds/{bed_id}/readings",
+        params={"minutes": 10, "limit": 25},
+        headers=headers
+    )
+
+    assert response.status_code == 200
+    assert response.json() == []

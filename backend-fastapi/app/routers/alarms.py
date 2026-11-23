@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..auth import allowed_bed
 from ..database import get_db
-from ..logic import latest_occurrence
+from ..logic import latest_occurrence, alarm_ringing
 from ..models import Alarm, Bed
 from ..mqtt import push_commands
 from ..schemas import AlarmIn, AlarmOut, AlarmPatch
@@ -81,14 +81,55 @@ def delete_alarm(alarm_id: str, bed_id: str = Depends(allowed_bed), db: Session 
     return Response(status_code=204)
 
 
+
 @router.post("/{alarm_id}/snooze", response_model=AlarmOut)
-def snooze_alarm(alarm_id: str, bed_id: str = Depends(allowed_bed), db: Session = Depends(get_db)):
+def snooze_alarm(
+    alarm_id: str,
+    bed_id: str = Depends(allowed_bed),
+    db: Session = Depends(get_db)
+):
+    """
+    Only allow snoozing alarms that are currently ringing.
+
+    Prevents invalid snooze requests and ensures
+    the alarm belongs to the authorised bed.
+    """
+
+    # Find the alarm and verify bed ownership.
     alarm = get_alarm(db, bed_id, alarm_id)
-    alarm.snoozed_until = datetime.now(timezone.utc) + timedelta(minutes=alarm.snooze_minutes)
+
+    # Retrieve the bed's local timezone.
+    bed = db.get(Bed, bed_id)
+    local_now = datetime.now(ZoneInfo(bed.timezone))
+
+    # Disabled alarms cannot be snoozed.
+    if not alarm.enabled:
+        raise HTTPException(
+            status_code=409,
+            detail="Disabled alarms cannot be snoozed"
+        )
+
+    # Check whether the alarm is currently due.
+    if not alarm_ringing(alarm, local_now):
+        raise HTTPException(
+            status_code=409,
+            detail="Only a currently ringing alarm can be snoozed"
+        )
+
+    # Set the next time the alarm should ring.
+    alarm.snoozed_until = (
+        datetime.now(timezone.utc)
+        + timedelta(minutes=alarm.snooze_minutes)
+    )
+
     db.commit()
     db.refresh(alarm)
-    push_commands(db, bed_id)         # buzzer off now, not in 30 seconds
+
+    # Notify the Raspberry Pi of updated commands.
+    push_commands(db, bed_id)
+
     return alarm
+
 
 
 @router.post("/{alarm_id}/dismiss", response_model=AlarmOut)

@@ -117,7 +117,7 @@ def test_alarm_crud_and_ownership(client):
     assert client.patch(f"/api/beds/{patrick}/alarms/{alarm['id']}", json={"label": "x"}, headers=h).status_code == 404
     r = client.patch(f"/api/beds/{maureen}/alarms/{alarm['id']}", json={"label": "Breakfast"}, headers=h)
     assert r.json()["label"] == "Breakfast" and r.json()["time"] == "07:30"
-    assert client.post(f"/api/beds/{maureen}/alarms/{alarm['id']}/snooze", headers=h).json()["snoozed_until"]
+    assert client.post(f"/api/beds/{maureen}/alarms/{alarm['id']}/snooze", headers=h).status_code == 409
     assert client.post(f"/api/beds/{maureen}/alarms/{alarm['id']}/dismiss", headers=h).json()["snoozed_until"] is None
     assert client.delete(f"/api/beds/{maureen}/alarms/{alarm['id']}", headers=h).status_code == 204
     assert client.get(f"/api/beds/{maureen}/alarms", headers=h).json() == []
@@ -151,6 +151,7 @@ def test_claim_with_generated_code(client):
 
 
 
+
 def test_duplicate_mqtt_delivery_is_idempotent(client):
     from sqlalchemy import func, select
     from app.models import Reading, now_utc
@@ -164,40 +165,22 @@ def test_duplicate_mqtt_delivery_is_idempotent(client):
             reading(recorded_at=timestamp)
         )
 
-        print("\nIncoming timestamp:", repr(timestamp))
-        print("Stored timestamp:", repr(first.recorded_at))
-
-        existing = db.scalar(
-            select(Reading)
-            .where(
-                Reading.bed_id == first.bed_id,
-                Reading.recorded_at == timestamp
-            )
-            .limit(1)
-        )
-
-        print(
-            "Exact database match:",
-            existing.id if existing else None
-        )
-
         second = save_reading(
             db,
             "pi-maureen",
             reading(recorded_at=timestamp)
         )
 
-        print("First reading ID:", first.id)
-        print("Second reading ID:", second.id)
+        # Duplicate deliveries must share one reading.
+        assert first.id == second.id
 
+        # Only one database record should exist.
         count = db.scalar(
             select(func.count()).select_from(Reading)
         )
 
-        print("Total readings:", count)
-
-        assert first.id == second.id
         assert count == 1
+
 
 
 def test_empty_readings_window_returns_no_old_data(client):
@@ -230,3 +213,84 @@ def test_empty_readings_window_returns_no_old_data(client):
 
     assert response.status_code == 200
     assert response.json() == []
+
+
+def test_disabled_alarm_cannot_be_snoozed(client):
+    """
+    Verify disabled alarms reject snooze requests.
+    """
+    h = login(client)
+    bed_id = claim(client, h)
+
+    response = client.post(
+        f"/api/beds/{bed_id}/alarms",
+        json={
+            "time": "07:30",
+            "enabled": False
+        },
+        headers=h
+    )
+
+    assert response.status_code == 201
+    alarm_id = response.json()["id"]
+
+    response = client.post(
+        f"/api/beds/{bed_id}/alarms/{alarm_id}/snooze",
+        headers=h
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        "Disabled alarms cannot be snoozed"
+    )
+
+
+def test_ringing_alarm_can_be_snoozed(client):
+    """
+    Verify a due alarm can be snoozed,
+    but cannot be snoozed repeatedly while paused.
+    """
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+    from app.models import Alarm
+
+    h = login(client)
+    bed_id = claim(client, h)
+
+    # Create an alarm scheduled one minute ago.
+    local_now = datetime.now(ZoneInfo("Europe/Dublin"))
+    alarm_time = (
+        local_now - timedelta(minutes=1)
+    ).strftime("%H:%M")
+
+    response = client.post(
+        f"/api/beds/{bed_id}/alarms",
+        json={"time": alarm_time},
+        headers=h
+    )
+
+    assert response.status_code == 201
+    alarm_id = response.json()["id"]
+
+    # Simulate an occurrence that has not been handled.
+    with SessionLocal() as db:
+        alarm = db.get(Alarm, alarm_id)
+        alarm.last_triggered_date = None
+        db.commit()
+
+    # First snooze must succeed.
+    response = client.post(
+        f"/api/beds/{bed_id}/alarms/{alarm_id}/snooze",
+        headers=h
+    )
+
+    assert response.status_code == 200
+    assert response.json()["snoozed_until"] is not None
+
+    # Repeated snooze while paused must be rejected.
+    response = client.post(
+        f"/api/beds/{bed_id}/alarms/{alarm_id}/snooze",
+        headers=h
+    )
+
+    assert response.status_code == 409

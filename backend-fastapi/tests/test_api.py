@@ -148,3 +148,33 @@ def test_claim_with_generated_code(client):
         code = bed.pairing_code
     h = login(client)
     assert client.post("/api/beds/claim", json={"pairing_code": code}, headers=h).status_code == 200
+
+
+def test_duplicate_mqtt_delivery_is_idempotent(client):
+    from sqlalchemy import func, select
+    from app.models import Reading, now_utc
+
+    timestamp = now_utc()
+
+    with SessionLocal() as db:
+        first = save_reading(
+            db,
+            "pi-maureen",
+            reading(recorded_at=timestamp)
+        )
+
+        second = save_reading(
+            db,
+            "pi-maureen",
+            reading(recorded_at=timestamp)
+        )
+
+        # Both deliveries should reference one reading.
+        assert first.id == second.id
+
+        # Only one database row should exist.
+        count = db.scalar(
+            select(func.count()).select_from(Reading)
+        )
+
+        assert count == 1

@@ -23,6 +23,7 @@ from .database import SessionLocal
 from .ingest import commands_for_bed, save_reading
 from .models import Device
 from .schemas import Commands, ReadingIn
+from .logic import is_live_mqtt_timestamp
 
 log = logging.getLogger("smartbed.mqtt")
 
@@ -91,23 +92,55 @@ def _on_connect(client, userdata, flags, reason_code, properties):
 
 
 def _on_message(client, userdata, msg):
-    # This runs on paho's thread, not FastAPI's, so it opens its own DB session.
-    # Any uncaught exception here would kill the MQTT thread, hence the broad except.
+    # MQTT callbacks run in a separate thread.
+    # Open a dedicated database session for each message.
     try:
-        parts = msg.topic.split("/")             # ["smartbed", "<device_id>", "readings"]
+        parts = msg.topic.split("/")
+
+        # Expected topic: smartbed/<device_id>/readings
         if len(parts) != 3:
             return
+
         device_id = parts[1]
+
+        # Step 1: Validate the incoming sensor data
         try:
             data = ReadingIn.model_validate_json(msg.payload)
+
         except ValidationError as err:
-            log.warning("Rejected reading from %s: %s", device_id, err.errors())
+            log.warning(
+                "Rejected reading from %s: %s",
+                device_id,
+                err.errors()
+            )
             return
+
+        # Step 2: Reject outdated or future sensor readings
+        if not is_live_mqtt_timestamp(data.recorded_at):
+            log.warning(
+                "Discarded delayed or future reading from %s",
+                device_id
+            )
+            return
+
+        # Step 3: Save valid readings to the database
         with SessionLocal() as db:
             reading = save_reading(db, device_id, data)
+
             if reading is None:
-                log.warning("Reading from unknown device %r ignored", device_id)
+                log.warning(
+                    "Reading from unknown device %r ignored",
+                    device_id
+                )
                 return
-            _publish(client, device_id, commands_for_bed(db, reading.bed_id))
+
+            # Step 4: Send updated commands to the device
+            commands = commands_for_bed(db, reading.bed_id)
+
+            _publish(client, device_id, commands)
+
     except Exception:
-        log.exception("Failed to handle MQTT message on %s", msg.topic)
+        log.exception(
+            "Failed to handle MQTT message on %s",
+            msg.topic
+        )

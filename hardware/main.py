@@ -33,6 +33,7 @@ from actuators.buzzer import AlarmBuzzer  # noqa: E402
 from actuators.leds import HeaterLED      # noqa: E402
 from sensors.dht22 import DHT22Sensor     # noqa: E402
 from sensors.fsr402 import FSR402         # noqa: E402
+from sensors.occupancy import OccupancyFilter
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("smartbed-pi")
@@ -59,6 +60,17 @@ def get_timestamp():
 
 
 def main() -> None:
+
+    pressure_filter = OccupancyFilter(
+        threshold=OCCUPIED_THRESHOLD,
+        hysteresis=float(
+            os.getenv("OCCUPANCY_HYSTERESIS", "5")
+        ),
+        samples=int(
+            os.getenv("OCCUPANCY_CONFIRM_SAMPLES", "2")
+        )
+    )
+
     fsr = FSR402(channel=0)
     dht = DHT22Sensor()
     heater = HeaterLED(int(os.getenv("HEATER_LED_PIN", "17")))
@@ -114,15 +126,38 @@ def main() -> None:
                     latest_dht = reading
                 next_dht = now + DHT22_INTERVAL
 
+           
             if now >= next_fsr:
+                # Step 1: Read the FSR402 pressure sensor.
                 raw = fsr.read_raw()
-                pressure_percent = round((raw / 1023) * 100, 2)
-                was_occupied = occupied
-                occupied = pressure_percent >= OCCUPIED_THRESHOLD
-                if was_occupied is not None and occupied != was_occupied:
-                    log.info("Bed %s (pressure %s%%)", "occupied" if occupied else "empty", pressure_percent)
-                    next_publish = now                 # tell the server straight away
+
+                # Step 2: Convert the raw ADC reading
+                # into a percentage (0-100%).
+                pressure_percent = round(
+                    (raw / 1023) * 100,
+                    2
+                )
+
+                # Step 3: Apply hysteresis and confirmation
+                # sampling to reduce false occupancy changes.
+                occupied, changed = pressure_filter.update(
+                    pressure_percent
+                )
+
+                # Step 4: Only publish immediately when
+                # a new occupancy state has been confirmed.
+                if changed and occupied is not None:
+                    log.info(
+                        "Bed %s (pressure %.2f%%)",
+                        "occupied" if occupied else "empty",
+                        pressure_percent
+                    )
+
+                    next_publish = now
+
+                # Step 5: Schedule the next pressure reading.
                 next_fsr = now + FSR402_INTERVAL
+
 
             if now >= next_publish and latest_dht is not None and occupied is not None:
                 # The server expects one flat reading, so the nested sensor data is mapped here.

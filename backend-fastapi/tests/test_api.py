@@ -294,3 +294,37 @@ def test_ringing_alarm_can_be_snoozed(client):
     )
 
     assert response.status_code == 409
+
+
+def test_creating_alarm_publishes_commands(client, monkeypatch):
+    """
+    Creating an alarm must trigger a command update
+    for the correct bed.
+    """
+    from app.routers import alarms as alarm_routes
+
+    h = login(client)
+    bed_id = claim(client, h)
+
+    published = []
+
+    # Replace the real MQTT publisher with a test spy.
+    def fake_push_commands(db, target_bed_id):
+        published.append(target_bed_id)
+
+    monkeypatch.setattr(
+        alarm_routes,
+        "push_commands",
+        fake_push_commands
+    )
+
+    response = client.post(
+        f"/api/beds/{bed_id}/alarms",
+        json={"time": "08:15", "label": "Morning alarm"},
+        headers=h
+    )
+
+    assert response.status_code == 201
+
+    # Verify the correct bed receives a command update.
+    assert published == [bed_id]

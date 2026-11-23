@@ -40,15 +40,40 @@ def list_alarms(bed_id: str = Depends(allowed_bed), db: Session = Depends(get_db
     return db.scalars(select(Alarm).where(Alarm.bed_id == bed_id).order_by(Alarm.time)).all()
 
 
+
 @router.post("", response_model=AlarmOut, status_code=201)
-def create_alarm(body: AlarmIn, bed_id: str = Depends(allowed_bed), db: Session = Depends(get_db)):
-    alarm = Alarm(bed_id=bed_id, **body.model_dump())   # ** unpacks the dict into keyword args
+def create_alarm(
+    body: AlarmIn,
+    bed_id: str = Depends(allowed_bed),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new alarm and immediately synchronise
+    device commands through MQTT.
+    """
+
+    # Create the alarm for the authorised bed.
+    alarm = Alarm(
+        bed_id=bed_id,
+        **body.model_dump()
+    )
+
     alarm.label = alarm.label.strip()
+
+    # Prevent newly created alarms from triggering
+    # immediately if today's scheduled time has passed.
     mark_handled(db, alarm)
+
+    # Save the new alarm.
     db.add(alarm)
     db.commit()
     db.refresh(alarm)
+
+    # NEW: Notify the Raspberry Pi immediately.
+    push_commands(db, bed_id)
+
     return alarm
+
 
 
 @router.patch("/{alarm_id}", response_model=AlarmOut)

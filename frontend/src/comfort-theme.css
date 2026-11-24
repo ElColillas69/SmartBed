@@ -1,0 +1,717 @@
+/*
+ * SmartBed Comfort UI — Commit 2
+ *
+ * Shared day/night colour palettes.
+ * Uses the existing data-theme attribute.
+ *
+ * Day: warm cream, sand, amber and forest green.
+ * Night: midnight blue, moonlight and soft sage.
+ */
+
+/* ==========================================
+   DAY PALETTE
+   Also used when Auto selects light mode
+========================================== */
+
+:root,
+:root[data-theme='light'],
+:root:not([data-theme]) {
+    --canvas: #FFF8F0;
+    --paper: #FFFEFB;
+    --paper-2: #FFF4E8;
+    --paper-3: #FFEAD5;
+
+    --rule: #EBDCCB;
+    --rule-strong: #CBB49D;
+
+    --ink: #332A24;
+    --ink-2: #665345;
+    --ink-3: #705B4C;
+
+    --sage: #286C4D;
+    --amber: #956209;
+    --red: #A42E36;
+
+    --amber-wash: rgba(187, 115, 21, 0.12);
+    --red-wash: rgba(164, 46, 54, 0.09);
+    --band: rgba(40, 108, 77, 0.12);
+
+    --on-ink: #FFFFFF;
+
+    --comfort-shadow:
+        0 6px 22px rgba(102, 71, 43, 0.07);
+
+    --comfort-hover-shadow:
+        0 12px 30px rgba(102, 71, 43, 0.12);
+
+    --comfort-focus: #A96512;
+
+    --comfort-gradient: linear-gradient(180deg,
+            #FFF5E5 0%,
+            #FFF9F1 45%,
+            #FFFDF9 100%);
+
+    color-scheme: light;
+}
+
+/* ==========================================
+   NIGHT PALETTE
+========================================== */
+
+:root[data-theme='dark'] {
+    --canvas: #142139;
+    --paper: #1D2D46;
+    --paper-2: #263B56;
+    --paper-3: #314968;
+
+    --rule: #405675;
+    --rule-strong: #647E9C;
+
+    --ink: #F7F1E8;
+    --ink-2: #D6E3F0;
+    --ink-3: #B2C6DB;
+
+    --sage: #8ADBAA;
+    --amber: #FFD17C;
+    --red: #FFB2AF;
+
+    --amber-wash: rgba(255, 209, 124, 0.12);
+    --red-wash: rgba(255, 178, 175, 0.10);
+    --band: rgba(138, 219, 170, 0.13);
+
+    --on-ink: #142139;
+
+    --comfort-shadow:
+        0 8px 26px rgba(4, 12, 27, 0.24);
+
+    --comfort-hover-shadow:
+        0 14px 35px rgba(4, 12, 27, 0.38);
+
+    --comfort-focus: #FFE19B;
+
+    --comfort-gradient: linear-gradient(180deg,
+            #142139 0%,
+            #172741 50%,
+            #1A2B45 100%);
+
+    color-scheme: dark;
+}
+
+/* Auto mode follows the operating system. */
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+        --canvas: #142139;
+        --paper: #1D2D46;
+        --paper-2: #263B56;
+        --paper-3: #314968;
+
+        --rule: #405675;
+        --rule-strong: #647E9C;
+
+        --ink: #F7F1E8;
+        --ink-2: #D6E3F0;
+        --ink-3: #B2C6DB;
+
+        --sage: #8ADBAA;
+        --amber: #FFD17C;
+        --red: #FFB2AF;
+
+        --amber-wash: rgba(255, 209, 124, 0.12);
+        --red-wash: rgba(255, 178, 175, 0.10);
+        --band: rgba(138, 219, 170, 0.13);
+
+        --on-ink: #142139;
+
+        --comfort-shadow:
+            0 8px 26px rgba(4, 12, 27, 0.24);
+
+        --comfort-hover-shadow:
+            0 14px 35px rgba(4, 12, 27, 0.38);
+
+        --comfort-focus: #FFE19B;
+
+        --comfort-gradient: linear-gradient(180deg,
+                #142139 0%,
+                #172741 50%,
+                #1A2B45 100%);
+
+        color-scheme: dark;
+    }
+}
+
+/* ==========================================
+   PAGE BACKGROUND AND TYPOGRAPHY
+========================================== */
+
+body {
+    background: var(--comfort-gradient);
+    color: var(--ink);
+
+    min-height: 100vh;
+
+    font-family:
+        'Atkinson Hyperlegible',
+        system-ui,
+        sans-serif;
+}
+
+.comfort-app {
+    min-height: 100vh;
+}
+
+.comfort-app>.main {
+    max-width: 1320px;
+    padding-top: 64px;
+}
+
+.page-head {
+    margin-bottom: 24px;
+}
+
+.page-head h1 {
+    color: var(--ink);
+    font-size: clamp(30px, 3.6vw, 43px);
+    line-height: 1.18;
+    letter-spacing: -0.025em;
+}
+
+.kicker {
+    color: var(--ink-2);
+    font-weight: 600;
+    letter-spacing: 0.025em;
+}
+
+.note,
+.field .hint,
+.facts dt {
+    color: var(--ink-2);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.muted {
+    color: var(--ink-2);
+}
+
+/* ==========================================
+   CARDS AND CONTENT SECTIONS
+========================================== */
+
+.block {
+    min-width: 0;
+
+    margin-bottom: 20px;
+    padding: clamp(18px, 2.1vw, 26px);
+
+    background: var(--paper);
+
+    border: 1px solid var(--rule);
+    border-radius: 20px;
+
+    box-shadow: var(--comfort-shadow);
+}
+
+.block-head {
+    margin-bottom: 18px;
+    align-items: center;
+}
+
+.block-head h2 {
+    color: var(--ink);
+    font-size: clamp(17px, 1.7vw, 21px);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.cols-2 {
+    column-gap: 20px;
+    row-gap: 0;
+}
+
+.block.minor {
+    padding-bottom: 18px;
+}
+
+.block.minor h2 {
+    font-size: 16px;
+    color: var(--ink-2);
+}
+
+.block>.note:first-of-type {
+    margin: 0 0 20px;
+}
+
+/* ==========================================
+   CURRENT OCCUPANCY / STATUS
+========================================== */
+
+.status {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+
+    border-left-width: 6px;
+    border-left-color: var(--rule-strong);
+
+    border-radius: 16px;
+
+    padding: 20px 24px;
+    margin-bottom: 24px;
+
+    box-shadow: var(--comfort-shadow);
+}
+
+.status.in {
+    border-left-color: var(--sage);
+}
+
+.status.out {
+    border-left-color: var(--amber);
+}
+
+.status.alert {
+    border-left-color: var(--red);
+}
+
+.status.stale {
+    border-left-style: dashed;
+    border-left-color: var(--ink-3);
+}
+
+.status h1 {
+    color: var(--ink);
+    font-weight: 700;
+}
+
+.status-sub {
+    color: var(--ink-2);
+    line-height: 1.6;
+}
+
+.status-sub b {
+    color: var(--ink);
+}
+
+.stale-tag {
+    border-radius: 8px;
+    background: var(--paper-2);
+
+    padding: 7px 10px;
+    color: var(--ink-2);
+
+    font-weight: 700;
+}
+
+/* ==========================================
+   READINGS AND STATISTICS
+========================================== */
+
+.facts dt,
+.readouts-note {
+    color: var(--ink-2);
+}
+
+.facts dd {
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: -0.025em;
+}
+
+.facts p {
+    color: var(--ink-2);
+}
+
+.reading {
+    color: var(--ink);
+}
+
+.reading small {
+    color: var(--ink-2);
+}
+
+.readout {
+    border-left-color: var(--rule);
+}
+
+.facts .lead dd {
+    color: var(--ink);
+}
+
+.goal-track {
+    border-radius: 999px;
+    overflow: visible;
+}
+
+.goal-fill {
+    border-radius: 999px;
+    background: var(--sage);
+}
+
+.goal-mark {
+    background: var(--ink);
+}
+
+/* ==========================================
+   BUTTONS
+========================================== */
+
+.btn {
+    min-height: 40px;
+    height: auto;
+
+    padding: 9px 16px;
+
+    background: var(--paper);
+    color: var(--ink);
+
+    border: 1px solid var(--rule-strong);
+    border-radius: 12px;
+
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.btn:hover:not(:disabled) {
+    border-color: var(--ink-2);
+    box-shadow: var(--comfort-shadow);
+}
+
+.btn.primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--on-ink);
+}
+
+.btn.primary:hover:not(:disabled) {
+    background: var(--ink-2);
+    border-color: var(--ink-2);
+    color: var(--on-ink);
+}
+
+.btn.ghost {
+    background: transparent;
+    color: var(--ink-2);
+}
+
+.btn.ghost:hover:not(:disabled) {
+    color: var(--ink);
+    background: var(--paper-2);
+}
+
+.btn.sm {
+    min-height: 34px;
+    height: auto;
+    padding: 7px 12px;
+}
+
+/* ==========================================
+   FORM CONTROLS
+========================================== */
+
+.input,
+.field input:not([type='range']),
+.field select {
+    min-height: 44px;
+
+    background: var(--paper-2);
+    color: var(--ink);
+
+    border: 1px solid var(--rule-strong);
+    border-radius: 11px;
+
+    padding: 9px 12px;
+}
+
+.input::placeholder,
+.field input::placeholder {
+    color: var(--ink-3);
+}
+
+.field label {
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.input:focus,
+.field input:focus-visible,
+.field select:focus-visible {
+    border-color: var(--comfort-focus);
+    outline: 2px solid var(--comfort-focus);
+    outline-offset: 2px;
+}
+
+input[type='range'] {
+    accent-color: var(--sage);
+}
+
+.switch .track {
+    border-radius: 999px;
+    background: var(--paper-3);
+}
+
+.switch .thumb {
+    border-radius: 50%;
+    background: var(--ink-2);
+}
+
+.switch input:checked~.track {
+    background: var(--sage);
+    border-color: var(--sage);
+}
+
+.switch input:checked~.thumb {
+    background: var(--on-ink);
+}
+
+/* ==========================================
+   TABS AND NAVIGATION
+========================================== */
+
+.seg {
+    border-color: var(--rule-strong);
+    border-radius: 12px;
+}
+
+.seg a,
+.seg button {
+    color: var(--ink-2);
+    font-weight: 600;
+}
+
+.seg a.active,
+.seg button[aria-pressed='true'] {
+    background: var(--ink);
+    color: var(--on-ink);
+}
+
+.seg a:hover:not(.active),
+.seg button:hover:not([aria-pressed='true']) {
+    background: var(--paper-2);
+    color: var(--ink);
+}
+
+@media (max-width: 760px) {
+    .comfort-mobile-tabbar {
+        background: var(--paper);
+        border-top: 1px solid var(--rule);
+
+        box-shadow: 0 -5px 22px rgba(0, 0, 0, 0.08);
+    }
+
+    .comfort-mobile-tabbar a {
+        min-height: 58px;
+        color: var(--ink-2);
+    }
+
+    .comfort-mobile-tabbar a.active {
+        color: var(--ink);
+        background: var(--paper-2);
+    }
+
+    .comfort-app>.main {
+        padding-top: 30px;
+    }
+}
+
+/* ==========================================
+   NOTICES AND EVENT LOG
+========================================== */
+
+.log-item {
+    border-bottom-color: var(--rule);
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.log-item span {
+    color: var(--ink-2);
+}
+
+.log-item .tag {
+    color: var(--ink-2);
+    font-weight: 700;
+}
+
+.log-item.warning .tag {
+    color: var(--amber);
+}
+
+.log-item.critical {
+    border-radius: 12px;
+    background: var(--red-wash);
+    border-bottom-color: var(--red);
+}
+
+.log-item.critical .tag,
+.log-item.critical strong {
+    color: var(--red);
+}
+
+.all-clear {
+    color: var(--ink-2);
+}
+
+/* ==========================================
+   CHARTS AND TABLES
+========================================== */
+
+.legend {
+    color: var(--ink-2);
+}
+
+.strip {
+    border-bottom-color: var(--rule-strong);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.strip .in {
+    background: var(--sage);
+}
+
+.strip .out {
+    background: repeating-linear-gradient(135deg,
+            var(--amber) 0 3px,
+            transparent 3px 7px);
+
+    box-shadow: inset 0 0 0 1px var(--amber);
+}
+
+.strip .gap {
+    background: repeating-linear-gradient(135deg,
+            transparent 0 6px,
+            var(--rule) 6px 8px);
+}
+
+.axis,
+.bar-days {
+    color: var(--ink-2);
+}
+
+.bar-val {
+    background: var(--paper);
+    color: var(--ink-2);
+}
+
+.table th {
+    color: var(--ink-2);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.table td {
+    color: var(--ink);
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+.table tbody tr:hover {
+    background: var(--paper-2);
+}
+
+/* ==========================================
+   LOADING AND NOTIFICATIONS
+========================================== */
+
+.skeleton {
+    background: var(--paper-3);
+    border-radius: 14px;
+}
+
+.toast {
+    border-radius: 12px;
+    box-shadow: var(--comfort-hover-shadow);
+}
+
+.toast.error {
+    background: var(--red);
+    color: var(--on-ink);
+}
+
+/* ==========================================
+   KEYBOARD ACCESSIBILITY
+========================================== */
+
+:focus-visible {
+    outline: 3px solid var(--comfort-focus);
+    outline-offset: 3px;
+}
+
+/* ==========================================
+   SMOOTH THEME TRANSITIONS
+========================================== */
+
+body,
+.block,
+.status,
+.btn,
+.input,
+.seg,
+.tabbar,
+.log-item {
+    transition:
+        background-color 220ms ease,
+        border-color 220ms ease,
+        color 220ms ease,
+        box-shadow 220ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    body,
+    .block,
+    .status,
+    .btn,
+    .input,
+    .seg,
+    .tabbar,
+    .log-item {
+        transition: none;
+    }
+}
+
+/* ==========================================
+   PRINTABLE SLEEP REPORTS
+   Always print in light colours.
+========================================== */
+
+@media print {
+
+    :root,
+    :root[data-theme='light'],
+    :root[data-theme='dark'] {
+        --canvas: #FFFFFF;
+        --paper: #FFFFFF;
+        --paper-2: #F6F6F6;
+        --ink: #222222;
+        --ink-2: #444444;
+        --ink-3: #555555;
+        --rule: #DDDDDD;
+        --rule-strong: #BBBBBB;
+
+        color-scheme: light;
+    }
+
+    body {
+        background: #FFFFFF !important;
+        color: #222222 !important;
+    }
+
+    .comfort-hero,
+    .comfort-mobile-tabbar,
+    .skip-link {
+        display: none !important;
+    }
+
+    .comfort-app>.main {
+        max-width: none;
+        padding: 0 !important;
+    }
+
+    .block,
+    .status {
+        box-shadow: none;
+        border-color: #DDDDDD;
+    }
+}

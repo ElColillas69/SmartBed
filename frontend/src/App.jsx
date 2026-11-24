@@ -8,6 +8,7 @@ import WeekReport from './pages/WeekReport'
 import Alarms from './pages/Alarms'
 import Settings from './pages/Settings'
 import './comfort-header.css'
+import './comfort-theme.css'
 
 export default function App() {
   const { conditions, toast } = useBed()

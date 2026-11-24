@@ -1,0 +1,704 @@
+/*
+  SmartBed Comfort UI Overhaul — Commit 1
+  New hero header, navigation, day/night artwork.
+  The existing dashboard cards are unchanged.
+*/
+
+.comfort-app {
+    min-width: 0;
+}
+
+/* ================================
+   HERO: DAY MODE
+================================ */
+
+.comfort-hero {
+    --hero-ink: #342c29;
+    --hero-muted: #5d5048;
+    --hero-surface: rgba(255, 255, 255, 0.82);
+    --hero-border: rgba(71, 54, 35, 0.2);
+    --hero-nav-text: #3a302b;
+
+    isolation: isolate;
+    position: relative;
+    overflow: visible;
+
+    min-height: 270px;
+    max-width: 1320px;
+
+    margin: 18px auto 0;
+    padding: 22px clamp(20px, 4vw, 54px) 86px;
+
+    border-radius: 28px;
+    border: 1px solid rgba(88, 54, 20, 0.1);
+
+    background: linear-gradient(118deg,
+            #fff0d6,
+            #ffe2b4 62%,
+            #fbd3a7);
+
+    color: var(--hero-ink);
+
+    box-shadow: 0 14px 42px rgba(45, 39, 36, 0.1);
+}
+
+/* ================================
+   HERO: NIGHT MODE
+================================ */
+
+.comfort-hero--night {
+    --hero-ink: #fff9ef;
+    --hero-muted: #edf1f7;
+    --hero-surface: rgba(31, 49, 74, 0.7);
+    --hero-border: rgba(250, 251, 255, 0.26);
+    --hero-nav-text: #253853;
+
+    background: linear-gradient(115deg,
+            #627893,
+            #4e6581 57%,
+            #3d5270);
+
+    border-color: rgba(255, 255, 255, 0.15);
+
+    box-shadow: 0 14px 42px rgba(26, 35, 54, 0.22);
+}
+
+/* Keep interactive content above sky artwork */
+
+.comfort-hero__top,
+.comfort-hero__intro,
+.comfort-nav {
+    position: relative;
+    z-index: 2;
+}
+
+/* ================================
+   TOP HEADER
+================================ */
+
+.comfort-hero__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+/* SmartBed branding */
+
+.comfort-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+
+    font-weight: 700;
+    font-size: 23px;
+    letter-spacing: -0.045em;
+
+    color: var(--hero-ink);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.comfort-brand__mark {
+    width: 31px;
+    height: 31px;
+}
+
+.comfort-brand__dot {
+    color: #d58a23;
+}
+
+.comfort-hero--night .comfort-brand__dot {
+    color: #ffe394;
+}
+
+/* Header actions */
+
+.comfort-hero__actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 9px;
+}
+
+/* ================================
+   MONITORING STATUS
+================================ */
+
+.comfort-monitor {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 8px 12px;
+
+    border: 1px solid var(--hero-border);
+    border-radius: 999px;
+
+    color: var(--hero-ink);
+    background: var(--hero-surface);
+
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.comfort-monitor__dot {
+    width: 9px;
+    height: 9px;
+    flex: none;
+    border-radius: 50%;
+    background: #808a92;
+}
+
+.comfort-monitor--ok .comfort-monitor__dot {
+    background: #339460;
+}
+
+.comfort-monitor--stale .comfort-monitor__dot {
+    background: #e6a73d;
+}
+
+.comfort-monitor--down .comfort-monitor__dot {
+    background: #e46c60;
+}
+
+/* ================================
+   BUTTONS AND PROFILE
+================================ */
+
+.comfort-hero button {
+    cursor: pointer;
+}
+
+.comfort-icon-button,
+.comfort-signout,
+.comfort-profile {
+    min-height: 38px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    padding: 8px 12px;
+
+    border: 1px solid var(--hero-border);
+    border-radius: 999px;
+
+    color: var(--hero-ink);
+    background: var(--hero-surface);
+
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+/* Refresh button */
+
+.comfort-icon-button {
+    width: 38px;
+    padding: 0;
+}
+
+/* Resident profile */
+
+.comfort-profile {
+    max-width: 175px;
+}
+
+.comfort-profile>span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.comfort-profile select {
+    min-width: 0;
+    max-width: 130px;
+
+    color: inherit;
+    font: inherit;
+
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.comfort-profile select option {
+    color: #242424;
+    background: white;
+}
+
+/* Hover feedback */
+
+.comfort-signout:hover,
+.comfort-icon-button:hover {
+    filter: brightness(0.95);
+}
+
+/* ================================
+   DAY / NIGHT TOGGLE
+================================ */
+
+.comfort-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+
+    padding: 4px;
+
+    border: 1px solid var(--hero-border);
+    border-radius: 999px;
+
+    background: var(--hero-surface);
+}
+
+.comfort-theme-toggle button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 7px 11px;
+
+    border: 0;
+    border-radius: 999px;
+
+    color: var(--hero-ink);
+    background: transparent;
+
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 1.25;
+}
+
+/* Selected day */
+
+.comfort-theme-toggle button.is-selected {
+    color: #392916;
+    background: #ffd37e;
+
+    box-shadow: 0 2px 8px rgba(29, 21, 15, 0.15);
+}
+
+/* Selected night */
+
+.comfort-hero--night .comfort-theme-toggle button.is-selected {
+    color: #1e344d;
+    background: #f0f1fa;
+}
+
+/* ================================
+   HERO WELCOME MESSAGE
+================================ */
+
+.comfort-hero__intro {
+    max-width: 660px;
+
+    margin: 45px 0 0 clamp(125px, 16vw, 205px);
+}
+
+.comfort-hero__eyebrow {
+    margin: 0 0 8px;
+
+    color: var(--hero-muted);
+
+    letter-spacing: 0.12em;
+    font: 700 11px/1.4 var(--sans);
+}
+
+.comfort-hero__intro h1 {
+    margin: 0;
+
+    color: var(--hero-ink);
+
+    font-size: clamp(30px, 3.8vw, 49px);
+    letter-spacing: -0.035em;
+    line-height: 1.13;
+}
+
+.comfort-hero__intro>p:last-child {
+    color: var(--hero-muted);
+
+    font-size: clamp(14px, 1.5vw, 16px);
+    line-height: 1.5;
+
+    margin: 12px 0 0;
+}
+
+/* ================================
+   FLOATING MAIN NAVIGATION
+================================ */
+
+.comfort-nav {
+    display: flex;
+    align-items: stretch;
+    gap: 7px;
+
+    position: absolute;
+    bottom: -20px;
+
+    left: clamp(20px, 4vw, 54px);
+    right: clamp(20px, 4vw, 54px);
+
+    width: max-content;
+    max-width: calc(100% - 40px);
+
+    padding: 6px;
+
+    border: 1px solid #e2dfdb;
+    border-radius: 18px;
+
+    background: #fffdfb;
+
+    box-shadow: 0 12px 22px rgba(36, 29, 31, 0.14);
+}
+
+.comfort-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+
+    padding: 12px 18px;
+
+    color: var(--hero-nav-text);
+    text-decoration: none;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    border-radius: 13px;
+
+    transition:
+        background 0.18s ease,
+        transform 0.18s ease;
+}
+
+.comfort-nav a:hover {
+    background: #f7eee3;
+    transform: translateY(-1px);
+}
+
+/* Active navigation: day */
+
+.comfort-nav a.active {
+    background: #fee8c9;
+    color: #4a321a;
+}
+
+/* Active navigation: night */
+
+.comfort-hero--night .comfort-nav a.active {
+    background: #e7eafa;
+    color: #293a5e;
+}
+
+/* Notice count */
+
+.comfort-nav__count {
+    padding: 2px 7px;
+
+    background: #ac4239;
+    color: white;
+
+    border-radius: 9px;
+    font-size: 11px;
+}
+
+/* Keep content away from floating navigation */
+
+.comfort-app>.main {
+    padding-top: 60px;
+}
+
+/* ================================
+   SKY ARTWORK
+================================ */
+
+.comfort-sky {
+    position: absolute;
+    inset: 0;
+
+    overflow: hidden;
+    pointer-events: none;
+
+    border-radius: inherit;
+    z-index: 0;
+}
+
+/* Sun / moon disc */
+
+.comfort-sky__disc {
+    position: absolute;
+
+    left: 6%;
+    top: 40%;
+
+    width: 102px;
+    height: 102px;
+
+    border-radius: 50%;
+    background: #f4a118;
+
+    box-shadow:
+        0 0 0 13px rgba(253, 174, 40, 0.12),
+        0 0 55px rgba(255, 177, 43, 0.23);
+
+    opacity: 0.55;
+}
+
+/* Moon */
+
+.comfort-hero--night .comfort-sky__disc {
+    background: #cfd5e2;
+
+    box-shadow:
+        0 0 0 13px rgba(219, 226, 239, 0.08),
+        0 0 50px rgba(228, 232, 250, 0.13);
+
+    opacity: 0.45;
+}
+
+/* Moon craters */
+
+.comfort-sky__crater {
+    display: none;
+    position: absolute;
+
+    border-radius: 50%;
+    background: #a4b1ca;
+}
+
+.comfort-hero--night .comfort-sky__crater {
+    display: block;
+}
+
+.comfort-sky__crater--one {
+    width: 23px;
+    height: 23px;
+    top: 21px;
+    left: 26px;
+}
+
+.comfort-sky__crater--two {
+    width: 14px;
+    height: 14px;
+    top: 57px;
+    left: 62px;
+}
+
+/* Clouds */
+
+.comfort-sky__cloud {
+    position: absolute;
+
+    width: 180px;
+    height: 42px;
+
+    border-radius: 80px;
+    background: rgba(255, 255, 255, 0.28);
+}
+
+.comfort-sky__cloud--one {
+    top: 55%;
+    right: 8%;
+}
+
+.comfort-sky__cloud--two {
+    top: 24%;
+    right: 29%;
+
+    width: 100px;
+    height: 24px;
+}
+
+.comfort-hero--night .comfort-sky__cloud {
+    display: none;
+}
+
+/* Stars */
+
+.comfort-sky__star {
+    display: none;
+    position: absolute;
+
+    color: #f7d772;
+    font-size: 27px;
+    line-height: 1;
+
+    opacity: 0.72;
+}
+
+.comfort-hero--night .comfort-sky__star {
+    display: block;
+}
+
+.comfort-sky__star--1 {
+    left: 5%;
+    top: 10%;
+}
+
+.comfort-sky__star--2 {
+    left: 25%;
+    top: 12%;
+    font-size: 36px;
+}
+
+.comfort-sky__star--3 {
+    left: 39%;
+    top: 29%;
+}
+
+.comfort-sky__star--4 {
+    left: 62%;
+    top: 16%;
+    font-size: 32px;
+}
+
+.comfort-sky__star--5 {
+    left: 80%;
+    top: 45%;
+    font-size: 37px;
+}
+
+.comfort-sky__star--6 {
+    left: 91%;
+    top: 17%;
+}
+
+.comfort-sky__star--7 {
+    left: 54%;
+    top: 66%;
+    font-size: 23px;
+}
+
+.comfort-sky__star--8 {
+    left: 31%;
+    top: 78%;
+    font-size: 20px;
+}
+
+.comfort-sky__star--9 {
+    left: 94%;
+    top: 73%;
+    font-size: 19px;
+}
+
+/* ================================
+   TABLET LAYOUT
+================================ */
+
+@media (max-width: 1050px) {
+    .comfort-hero {
+        margin: 12px 12px 0;
+    }
+
+    .comfort-monitor {
+        max-width: 185px;
+    }
+
+    .comfort-hero__actions {
+        gap: 6px;
+    }
+
+    .comfort-hero__intro {
+        margin: 30px 0 0 125px;
+    }
+}
+
+/* ================================
+   MOBILE LAYOUT
+================================ */
+
+@media (max-width: 760px) {
+    .comfort-hero {
+        border-radius: 0 0 26px 26px;
+        margin: 0;
+        min-height: 252px;
+        padding: 18px 20px 30px;
+    }
+
+    .comfort-hero__top {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .comfort-hero__actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .comfort-hero__intro {
+        margin: 30px 0 0;
+        max-width: 76%;
+    }
+
+    .comfort-sky__disc {
+        left: 78%;
+        top: 48%;
+    }
+
+    .comfort-hero__intro h1 {
+        font-size: clamp(26px, 6vw, 35px);
+    }
+
+    .comfort-nav {
+        display: none;
+    }
+
+    .comfort-app>.main {
+        padding-top: 28px;
+    }
+
+    .comfort-mobile-tabbar {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .comfort-hero {
+        min-height: 260px;
+    }
+
+    .comfort-monitor {
+        max-width: 175px;
+    }
+
+    .comfort-profile {
+        max-width: 136px;
+    }
+
+    .comfort-profile select {
+        max-width: 84px;
+    }
+
+    .comfort-signout span {
+        display: none;
+    }
+
+    .comfort-sky__disc {
+        left: 71%;
+        top: 44%;
+        width: 68px;
+        height: 68px;
+    }
+
+    .comfort-theme-toggle button {
+        padding: 7px 8px;
+    }
+
+    .comfort-hero__intro {
+        margin-top: 19px;
+        padding-right: 55px;
+    }
+}
+
+/* Respect reduced-motion accessibility preferences */
+
+@media (prefers-reduced-motion: reduce) {
+    .comfort-nav a {
+        transition: none;
+    }
+}

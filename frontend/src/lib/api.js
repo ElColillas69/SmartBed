@@ -87,6 +87,17 @@ export const api = {
   commands: () => request(bed('/device/commands')),
   preferences: () => request(bed('/settings')),
   updatePreferences: (changes) => request(bed('/settings'), { method: 'PATCH', body: changes }),
+
+  // Shared care preferences stored in FastAPI.
+  carePreferences: (id) =>
+    request(`/beds/${encodeURIComponent(id)}/care`),
+
+  updateCarePreferences: (id, changes) =>
+    request(`/beds/${encodeURIComponent(id)}/care`, {
+      method: 'PUT',
+      body: changes,
+    }),
+
   alarms: () => request(bed('/alarms')),
   createAlarm: (alarm) => request(bed('/alarms'), { method: 'POST', body: alarm }),
   updateAlarm: (id, changes) => request(bed(`/alarms/${id}`), { method: 'PATCH', body: changes }),

@@ -15,7 +15,7 @@ export function BedDataProvider({ bed, children }) {
   const prefs = usePoll(api.preferences, 30000)
   const alarms = usePoll(api.alarms, 15000)
   const nights = usePoll(() => api.nights(7), 60000)
-  const [care, setCare] = useCarePrefs(bed)
+  const [care, setCare, careStatus] = useCarePrefs(bed)
   const [toast, setToast] = useState(null)
 
   const notify = useCallback((message, kind = 'ok') => {
@@ -36,13 +36,40 @@ export function BedDataProvider({ bed, children }) {
     }
   }, [notify])
 
-  const conditions = useMemo(
-    () => deriveConditions({ latest: live.data?.latest, readings: live.data?.readings, commands: live.data?.commands, care, heating: prefs.data }),
-    [live.data, prefs.data, care],
-  )
+
+  const conditions = useMemo(() => {
+    if (!careStatus.ready) {
+      return [{
+        id: 'care-unavailable',
+        level: 'warning',
+        title: 'Care preferences unavailable',
+        detail: 'Personalised monitoring thresholds cannot be verified until care settings load.',
+      }]
+    }
+
+    return deriveConditions({
+      latest: live.data?.latest,
+      readings: live.data?.readings,
+      commands: live.data?.commands,
+      care,
+      heating: prefs.data,
+    })
+  }, [live.data, prefs.data, care, careStatus.ready])
+
 
   const value = {
-    bed, live, prefs, alarms, nights, care, setCare, conditions, notify, act, toast,
+    bed,
+    live,
+    prefs,
+    alarms,
+    nights,
+    care,
+    setCare,
+    careStatus,
+    conditions,
+    notify,
+    act,
+    toast,
     connected: !live.error && live.data !== undefined,
   }
   return <BedContext.Provider value={value}>{children}</BedContext.Provider>

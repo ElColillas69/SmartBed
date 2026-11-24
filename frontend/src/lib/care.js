@@ -1,8 +1,15 @@
-// Partly generated with Claude (Anthropic, 2026): preferences stored per bed.
-import { useCallback, useState } from 'react'
 
-// Care preferences the backend does not store yet. They live in this
-// browser only, one set per bed; move them to the bed_setting table later.
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
+
+import { api } from './api'
+
+// Fallback values for display while loading.
+// The server remains the source of truth.
 export const CARE_DEFAULTS = {
   residentName: 'Maureen',
   graceMinutes: 20,
@@ -14,26 +21,111 @@ export const CARE_DEFAULTS = {
   humidityLimit: 70,
 }
 
-const keyFor = (bed) => `smartbed.care.${bed.id}`
-
-function load(bed) {
-  const defaults = { ...CARE_DEFAULTS, residentName: bed.resident_name }
-  try {
-    return { ...defaults, ...JSON.parse(localStorage.getItem(keyFor(bed)) || '{}') }
-  } catch {
-    return defaults
-  }
-}
-
 export function useCarePrefs(bed) {
-  const [care, setCare] = useState(() => load(bed))
-  const save = useCallback((next) => {
-    setCare(next)
+  const [state, setState] = useState({
+    data: null,
+    loading: true,
+    saving: false,
+    error: null,
+  })
+
+  // Prevent old requests from overwriting newer data.
+  const version = useRef(0)
+
+  const refresh = useCallback(async () => {
+    const requestId = ++version.current
+
+    setState((previous) => ({
+      ...previous,
+      loading: true,
+      error: null,
+    }))
+
     try {
-      localStorage.setItem(keyFor(bed), JSON.stringify(next))
-    } catch {
-      // storage unavailable (private mode); keep in memory
+      const data = await api.carePreferences(bed.id)
+
+      if (requestId === version.current) {
+        setState((previous) => ({
+          ...previous,
+          data,
+          loading: false,
+          error: null,
+        }))
+      }
+
+      return data
+    } catch (error) {
+      if (requestId === version.current) {
+        setState((previous) => ({
+          ...previous,
+          loading: false,
+          error,
+        }))
+      }
+
+      throw error
     }
-  }, [bed])
-  return [care, save]
+  }, [bed.id])
+
+  // Load preferences when the selected bed is opened.
+  useEffect(() => {
+    refresh().catch(() => { })
+
+    return () => {
+      version.current += 1
+    }
+  }, [refresh])
+
+  const save = useCallback(async (next) => {
+    const requestId = ++version.current
+
+    setState((previous) => ({
+      ...previous,
+      saving: true,
+      error: null,
+    }))
+
+    try {
+      const saved = await api.updateCarePreferences(
+        bed.id,
+        next
+      )
+
+      if (requestId === version.current) {
+        setState({
+          data: saved,
+          loading: false,
+          saving: false,
+          error: null,
+        })
+      }
+
+      return saved
+    } catch (error) {
+      if (requestId === version.current) {
+        setState((previous) => ({
+          ...previous,
+          saving: false,
+          error,
+        }))
+      }
+
+      throw error
+    }
+  }, [bed.id])
+
+  const care = state.data ?? {
+    ...CARE_DEFAULTS,
+    residentName: bed.resident_name,
+  }
+
+  return [
+    care,
+    save,
+    {
+      ...state,
+      refresh,
+      ready: Boolean(state.data),
+    },
+  ]
 }

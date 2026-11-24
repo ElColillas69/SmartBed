@@ -41,9 +41,18 @@ function BedSettings() {
   )
 }
 
+
 function CareSettings() {
-  const { care, setCare, notify } = useBed()
+  const { care, setCare, careStatus, notify } = useBed()
   const [draft, setDraft] = useState(care)
+
+  // Update the form after loading or saving server data.
+  useEffect(() => {
+    if (careStatus.ready) {
+      setDraft({ ...care })
+    }
+  }, [care, careStatus.ready])
+
   const set = (k, num) => (e) => setDraft({ ...draft, [k]: num ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value })
   const dirty = JSON.stringify(draft) !== JSON.stringify(care)
   const within = (v, lo, hi) => Number.isFinite(v) && v >= lo && v <= hi
@@ -52,7 +61,7 @@ function CareSettings() {
 
   return (
     <Card title="Who and when">
-      <p className="note">Saved in this browser only for now. The backend has no table for these yet (the new schema adds them to <code>bed_settings</code>).</p>
+      <p className="note"> These preferences are stored securely on the SmartBed server and shared with authorised carers.</p>
       <div className="form-grid">
         <div className="field">
           <label htmlFor="c-name">Who sleeps here</label>
@@ -91,12 +100,81 @@ function CareSettings() {
           <input id="c-high" className="input" type="number" step={0.5} min={18} max={35} value={draft.highTemp} onChange={set('highTemp', true)} />
         </div>
       </div>
+
       <div className="row end">
-        <button className="btn ghost" onClick={() => setDraft(CARE_DEFAULTS)}>Defaults</button>
-        <button className="btn primary" disabled={!dirty || !valid} onClick={() => { setCare({ ...draft, residentName: draft.residentName.trim() }); notify('Care preferences saved') }}>Save</button>
+        <button
+          className="btn ghost"
+          disabled={careStatus.saving}
+          onClick={() =>
+            careStatus.refresh().catch((error) =>
+              notify(error.message, 'error')
+            )
+          }
+        >
+          Reload from server
+        </button>
+
+        <button
+          className="btn ghost"
+          disabled={careStatus.saving}
+          onClick={() => setDraft({
+            ...CARE_DEFAULTS,
+            residentName: care.residentName,
+          })}
+        >
+          Defaults
+        </button>
+
+        <button
+          className="btn primary"
+          disabled={!dirty || !valid || careStatus.saving}
+          onClick={saveChanges}
+        >
+          {careStatus.saving ? 'Saving...' : 'Save to bed'}
+        </button>
       </div>
+
     </Card>
   )
+
+  if (!careStatus.ready) {
+    return (
+      <Card title="Who and when">
+        <p className="note" role="status">
+          {careStatus.loading
+            ? 'Loading shared care preferences...'
+            : 'Could not load care preferences.'}
+        </p>
+
+        {careStatus.error && (
+          <p role="alert">{careStatus.error.message}</p>
+        )}
+
+        {!careStatus.loading && (
+          <button
+            className="btn ghost"
+            onClick={() => careStatus.refresh().catch(() => { })}
+          >
+            Try again
+          </button>
+        )}
+      </Card>
+    )
+  }
+
+  const saveChanges = async () => {
+    try {
+      await setCare({
+        ...draft,
+        residentName: draft.residentName.trim(),
+      })
+
+      notify('Care preferences saved to SmartBed')
+    } catch (error) {
+      notify(error.message, 'error')
+    }
+  }
+
 }
 
 function Beds() {

@@ -1,4 +1,5 @@
-import { clock, duration, parseTime } from '../lib/time'
+import { clock, duration } from '../lib/time'
+import { buildOccupancySegments } from '../lib/occupancy'
 
 export function downsample(points, buckets = 60) {
   if (points.length <= buckets) return points
@@ -54,38 +55,72 @@ export function GoalBar({ minutes, goal }) {
   )
 }
 
-export function OccupancyStrip({ readings, hours = 8, now = new Date() }) {
+
+export function OccupancyStrip({
+  readings,
+  hours = 8,
+  now = new Date(),
+}) {
   const end = now.getTime()
   const start = end - hours * 3600_000
-  const asc = readings
-    .map((r) => ({ t: parseTime(r.recorded_at).getTime(), occupied: r.occupied }))
-    .filter((r) => r.t >= start)
-    .reverse()
-  const segments = []
-  let cursor = start
-  asc.forEach((r, i) => {
-    const next = asc[i + 1]?.t ?? end
-    if (r.t > cursor) segments.push({ kind: 'gap', from: cursor, to: r.t })
-    const to = Math.min(next, r.t + 10 * 60_000) // don't stretch over long silences
-    const kind = r.occupied ? 'in' : 'out'
-    const prev = segments.at(-1)
-    if (prev?.kind === kind && prev.to === r.t) prev.to = to
-    else segments.push({ kind, from: r.t, to })
-    cursor = to
-  })
-  if (cursor < end) segments.push({ kind: 'gap', from: cursor, to: end })
-  const ticks = Array.from({ length: hours + 1 }, (_, i) => new Date(start + i * 3600_000))
+
+  const segments = buildOccupancySegments(
+    readings,
+    end,
+    hours
+  )
+
+  const ticks = Array.from(
+    { length: hours + 1 },
+    (_, i) => new Date(start + i * 3600_000)
+  )
+
   return (
     <div className="timeline">
-      <div className="strip" role="img" aria-label={`Bed occupancy over the last ${hours} hours`}>
-        {segments.map((s, i) => (
-          <span key={i} className={s.kind} style={{ width: `${((s.to - s.from) / (end - start)) * 100}%` }}
-            title={`${s.kind === 'in' ? 'In bed' : s.kind === 'out' ? 'Out of bed' : 'No data'} ${clock(new Date(s.from))}–${clock(new Date(s.to))}`} />
-        ))}
+      <div
+        className="strip"
+        role="img"
+        aria-label={`Bed occupancy over the last ${hours} hours. Gaps indicate unavailable sensor data.`}
+      >
+        {segments.map((segment, i) => {
+          const label =
+            segment.kind === 'in'
+              ? 'In bed'
+              : segment.kind === 'out'
+                ? 'Out of bed'
+                : 'No data'
+
+          const width =
+            ((segment.to - segment.from) /
+              (end - start)) * 100
+
+          return (
+            <span
+              key={i}
+              className={segment.kind}
+              style={{ width: `${width}%` }}
+              title={`${label} ${clock(
+                new Date(segment.from)
+              )}–${clock(new Date(segment.to))}`}
+            />
+          )
+        })}
       </div>
+
       <div className="axis">
-        {ticks.map((t, i) => (
-          <span key={i} style={{ left: `${(i / hours) * 100}%` }}>{i === hours ? 'now' : i % 2 ? '' : clock(t)}</span>
+        {ticks.map((tick, i) => (
+          <span
+            key={i}
+            style={{
+              left: `${(i / hours) * 100}%`,
+            }}
+          >
+            {i === hours
+              ? 'now'
+              : i % 2
+                ? ''
+                : clock(tick)}
+          </span>
         ))}
       </div>
     </div>

@@ -48,7 +48,7 @@ export default function Tonight() {
   const change = lastChange(readings)
   const critical = conditions.some((c) => c.level === 'critical')
   const updated = parseTime(latest.recorded_at)
-  const stale = isStale(latest, now)
+  const stale = Boolean(live.error) || isStale(latest, now)
   const silentFor = agoText((now - updated) / 60000)
   const series = (key) => readings.map((r) => ({ t: parseTime(r.recorded_at).getTime(), v: r[key] })).reverse()
   const tonight = nights.data?.[0]
@@ -63,18 +63,33 @@ export default function Tonight() {
         <div className="kicker">
           {now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}, {clock(now)}
         </div>
-        {stale && <div className="stale-tag">Not live · no data for {silentFor.replace(/ ago$/, '')}</div>}
+        {stale && (<div className="stale-tag">Not live · current occupancy unknown</div>)}
         <h1>
           {care.residentName} {stale ? 'was' : 'is'} {where}
           {stale && <span className="stale"> at the last reading</span>}
         </h1>
+
         {stale ? (
           <p className="status-sub">
-            Last reading <b>{updated.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })}, {clock(updated)}</b>, {silentFor}.
-            {' '}Where {care.residentName} is now is unknown until the bed reports again.
-            {alarm && <> Alarm set for <b>{alarm.time}</b>.</>}
+            Last recorded observation:{' '}
+            <b>
+              {updated &&
+                Number.isFinite(updated.getTime())
+                ? `${updated.toLocaleDateString([], {
+                  weekday: 'short',
+                  day: 'numeric',
+                  month: 'short',
+                })}, ${clock(updated)}`
+                : 'timestamp unavailable'}
+            </b>.
+            {' '}The resident's current location is unknown until
+            SmartBed receives fresh readings.
+            {alarm && (
+              <> Alarm set for <b>{alarm.time}</b>.</>
+            )}
           </p>
         ) : (
+
           <p className="status-sub">
             {change && <>{change.sinceKnown ? 'Since' : 'At least since'} <b>{clock(change.since)}</b>, {agoText((now - change.since) / 60000)}. </>}
             Last reading {ago(updated)}.

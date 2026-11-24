@@ -37,13 +37,15 @@ export function BedDataProvider({ bed, children }) {
   }, [notify])
 
 
+
   const conditions = useMemo(() => {
     if (!careStatus.ready) {
       return [{
         id: 'care-unavailable',
         level: 'warning',
         title: 'Care preferences unavailable',
-        detail: 'Personalised monitoring thresholds cannot be verified until care settings load.',
+        detail:
+          'Personalised monitoring thresholds cannot be verified until care settings load.',
       }]
     }
 
@@ -53,8 +55,19 @@ export function BedDataProvider({ bed, children }) {
       commands: live.data?.commands,
       care,
       heating: prefs.data,
+
+      // Prevent cached data from generating live alerts
+      // when the backend request fails.
+      connectionDown: Boolean(live.error),
     })
-  }, [live.data, prefs.data, care, careStatus.ready])
+  }, [
+    live.data,
+    live.error,
+    prefs.data,
+    care,
+    careStatus.ready,
+  ])
+
 
 
   const value = {

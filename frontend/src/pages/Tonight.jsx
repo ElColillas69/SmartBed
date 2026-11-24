@@ -7,6 +7,7 @@ import { useBed } from '../lib/BedData'
 import { isStale, lastChange, tempRange } from '../lib/conditions'
 import { ago, agoText, clock, duration, nextAlarm, parseTime } from '../lib/time'
 import NoData from './NoData'
+import DashboardOverview from '../components/DashboardOverview'
 
 function Readout({ label, value, unit, note, children }) {
   return (
@@ -41,9 +42,23 @@ export default function Tonight() {
   const savePref = (changes, msg) => act(() => api.updatePreferences(changes), msg, prefs.refresh, live.refresh)
   const [target, setTarget] = useDebouncedTarget(pref?.target_temperature_c, (v) => savePref({ target_temperature_c: v }))
 
-  if (!live.data) return <NoData state={live} />
+  if (!live.data) {
+    return (
+      <>
+        <DashboardOverview />
+        <NoData state={live} />
+      </>
+    )
+  }
   const { latest, readings, commands } = live.data
-  if (!latest) return <NoData empty />
+  if (!latest) {
+    return (
+      <>
+        <DashboardOverview />
+        <NoData empty />
+      </>
+    )
+  }
 
   const change = lastChange(readings)
   const critical = conditions.some((c) => c.level === 'critical')
@@ -98,6 +113,7 @@ export default function Tonight() {
         )}
       </header>
 
+      <DashboardOverview />
       <Conditions items={conditions}
         onSnooze={(id) => act(() => api.snoozeAlarm(id), 'Alarm snoozed', refreshAlarms)}
         onDismiss={(id) => act(() => api.dismissAlarm(id), 'Alarm dismissed', refreshAlarms)} />

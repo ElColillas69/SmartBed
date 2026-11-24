@@ -1,0 +1,337 @@
+/*
+ * SmartBed Comfort Overhaul — Commit 3
+ * Dashboard hierarchy, legibility and context.
+ * All colours follow the selected day/night palette.
+ */
+
+.comfort-glance {
+    margin: 26px 0 32px;
+}
+
+/* Section introduction */
+
+.comfort-glance__heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.comfort-glance__eyebrow {
+    margin: 0 0 5px;
+    color: var(--ink-2);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.comfort-glance__heading h2 {
+    margin: 0;
+    color: var(--ink);
+    font-size: clamp(25px, 3vw, 34px);
+    letter-spacing: -0.035em;
+    line-height: 1.2;
+}
+
+.comfort-glance__heading p:last-child {
+    margin: 8px 0 0;
+    color: var(--ink-2);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.comfort-glance__intro-icon {
+    width: 46px;
+    height: 46px;
+    flex: none;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 16px;
+    background: var(--paper-3);
+    color: var(--sage);
+}
+
+/* Responsive dashboard grid */
+
+.comfort-glance__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 15px;
+}
+
+/* Individual summary card */
+
+.comfort-glance__card {
+    min-width: 0;
+    min-height: 225px;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 22px 20px;
+
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 20px;
+
+    box-shadow: var(--comfort-shadow);
+
+    transition:
+        transform 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.comfort-glance__card:hover {
+    transform: translateY(-3px);
+    border-color: var(--rule-strong);
+    box-shadow: var(--comfort-hover-shadow);
+}
+
+/* Card headings */
+
+.comfort-glance__card-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    margin-bottom: 19px;
+
+    color: var(--ink-2);
+}
+
+.comfort-glance__card-heading svg {
+    flex: none;
+    color: var(--sage);
+}
+
+.comfort-glance__card-heading h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+/* Prominent information */
+
+.comfort-glance__metric {
+    margin: 0 0 7px;
+
+    color: var(--ink);
+
+    font-size: clamp(26px, 2.6vw, 35px);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.045em;
+
+    overflow-wrap: anywhere;
+}
+
+.comfort-glance__metric--room {
+    font-size: clamp(21px, 2vw, 27px);
+}
+
+.comfort-glance__metric--text {
+    font-size: clamp(19px, 1.8vw, 24px);
+    letter-spacing: -0.025em;
+}
+
+.comfort-glance__subtitle {
+    margin: 0 0 12px;
+
+    color: var(--ink-2);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.comfort-glance__detail {
+    margin: auto 0 0;
+
+    padding-top: 15px;
+
+    color: var(--ink-2);
+    font-size: 13px;
+    line-height: 1.6;
+
+    overflow-wrap: anywhere;
+}
+
+/* Clear visual meaning without relying only on colour */
+
+.comfort-glance__card--good {
+    border-top: 4px solid var(--sage);
+}
+
+.comfort-glance__card--watch {
+    border-top: 4px solid var(--amber);
+}
+
+.comfort-glance__card--unknown {
+    border-top: 4px dashed var(--rule-strong);
+}
+
+/* Time-in-bed goal progress */
+
+.comfort-glance__progress {
+    margin: 10px 0 4px;
+}
+
+.comfort-glance__progress progress {
+    display: block;
+    width: 100%;
+    height: 10px;
+
+    overflow: hidden;
+    border: 0;
+    border-radius: 999px;
+
+    accent-color: var(--sage);
+    background: var(--paper-3);
+}
+
+.comfort-glance__progress progress::-webkit-progress-bar {
+    background: var(--paper-3);
+    border-radius: 999px;
+}
+
+.comfort-glance__progress progress::-webkit-progress-value {
+    background: var(--sage);
+    border-radius: 999px;
+}
+
+.comfort-glance__progress progress::-moz-progress-bar {
+    background: var(--sage);
+    border-radius: 999px;
+}
+
+.comfort-glance__progress span {
+    display: block;
+    margin-top: 7px;
+
+    color: var(--ink-2);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.comfort-glance__footnote {
+    margin: 13px 4px 0;
+
+    color: var(--ink-2);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+/* Make existing occupancy information easier to read */
+
+.comfort-app .status {
+    padding: 25px 28px;
+    border-radius: 22px;
+
+    background: var(--paper);
+    box-shadow: var(--comfort-shadow);
+}
+
+.comfort-app .status h1 {
+    font-size: clamp(29px, 4vw, 45px);
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+}
+
+.comfort-app .status-sub {
+    font-size: 16px;
+    line-height: 1.75;
+}
+
+/* Keep detailed monitoring cards easy to scan */
+
+.comfort-app .block-head h2 {
+    font-size: clamp(19px, 2vw, 23px);
+    line-height: 1.35;
+}
+
+.comfort-app .readouts {
+    gap: 15px;
+}
+
+.comfort-app .readouts .readout {
+    min-width: 0;
+    padding: 18px;
+
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 15px;
+}
+
+.comfort-app .readouts .reading {
+    font-size: clamp(35px, 4vw, 46px);
+}
+
+/* Tablet */
+
+@media (max-width: 1100px) {
+    .comfort-glance__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .comfort-glance__card {
+        min-height: 195px;
+    }
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+    .comfort-glance {
+        margin-top: 22px;
+    }
+
+    .comfort-glance__grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .comfort-glance__card {
+        min-height: 0;
+        padding: 19px;
+    }
+
+    .comfort-glance__card-heading {
+        margin-bottom: 13px;
+    }
+
+    .comfort-glance__metric {
+        font-size: 30px;
+    }
+
+    .comfort-glance__metric--text,
+    .comfort-glance__metric--room {
+        font-size: 24px;
+    }
+
+    .comfort-app .status {
+        padding: 20px;
+    }
+
+    .comfort-app .status-sub {
+        font-size: 15px;
+    }
+
+    .comfort-app .readouts {
+        gap: 12px;
+    }
+}
+
+/* Accessible reduced-motion behaviour */
+
+@media (prefers-reduced-motion: reduce) {
+    .comfort-glance__card {
+        transition: none;
+    }
+
+    .comfort-glance__card:hover {
+        transform: none;
+    }
+}

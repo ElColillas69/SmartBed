@@ -53,6 +53,65 @@ class BedSettings(Base):
     light_warning_threshold: Mapped[int] = mapped_column(default=800, nullable=False)
     heating_enabled: Mapped[bool] = mapped_column(default=True, nullable=False)
 
+
+class BedCareSettings(Base):
+    """
+    Care preferences shared by authorised carers.
+
+    Each bed has one row containing its care thresholds
+    and display preferences.
+    """
+
+    __tablename__ = "bed_care_setting"
+
+    bed_id: Mapped[str] = mapped_column(
+        ForeignKey("bed.id"),
+        primary_key=True
+    )
+
+    resident_name: Mapped[str] = mapped_column(
+        String(40),
+        nullable=False
+    )
+
+    grace_minutes: Mapped[int] = mapped_column(
+        default=20,
+        nullable=False
+    )
+
+    night_start: Mapped[str] = mapped_column(
+        String(5),
+        default="21:00",
+        nullable=False
+    )
+
+    night_end: Mapped[str] = mapped_column(
+        String(5),
+        default="07:00",
+        nullable=False
+    )
+
+    sleep_goal_minutes: Mapped[int] = mapped_column(
+        default=450,
+        nullable=False
+    )
+
+    low_temp: Mapped[float] = mapped_column(
+        default=18.0,
+        nullable=False
+    )
+
+    high_temp: Mapped[float] = mapped_column(
+        default=26.0,
+        nullable=False
+    )
+
+    humidity_limit: Mapped[int] = mapped_column(
+        default=70,
+        nullable=False
+    )
+
+
 class Alarm(Base):
     __tablename__ = "alarm"
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))

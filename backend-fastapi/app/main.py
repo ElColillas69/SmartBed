@@ -13,6 +13,7 @@ from .routers import beds as bed_routes
 from .routers import device as device_routes
 from .routers import readings as reading_routes
 from .routers import settings as settings_routes
+from .routers import care as care_routes
 
 logging.basicConfig(level=logging.INFO)
 
@@ -34,6 +35,7 @@ app.include_router(reading_routes.router)
 app.include_router(settings_routes.router)
 app.include_router(alarm_routes.router)
 app.include_router(device_routes.router)
+app.include_router(care_routes.router)
 
 
 @app.get("/api/health")

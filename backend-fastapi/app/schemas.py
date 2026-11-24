@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, StrictBool, field_validator
+from pydantic import StrictInt, model_validator
 
 from .logic import utc
 
@@ -91,6 +92,78 @@ class SettingsPatch(BaseModel):
     target_temperature_c: float | None = Field(None, ge=15, le=30)
     light_warning_threshold: int | None = Field(None, ge=0, le=1023)
     heating_enabled: StrictBool | None = None
+
+
+
+# ---------- Shared care preferences ----------
+
+class CarePreferences(BaseModel):
+    """
+    Validated care preferences for one SmartBed.
+
+    CamelCase field names match the existing
+    React frontend preferences.
+    """
+
+    model_config = ConfigDict(
+        extra="forbid",
+        allow_inf_nan=False
+    )
+
+    residentName: str = Field(
+        min_length=1,
+        max_length=40
+    )
+
+    graceMinutes: StrictInt = Field(
+        ge=0,
+        le=60
+    )
+
+    nightStart: TimeHHMM
+    nightEnd: TimeHHMM
+
+    sleepGoalMinutes: StrictInt = Field(
+        ge=180,
+        le=720
+    )
+
+    lowTemp: float = Field(
+        ge=10,
+        le=25
+    )
+
+    highTemp: float = Field(
+        ge=18,
+        le=35
+    )
+
+    humidityLimit: StrictInt = Field(
+        ge=30,
+        le=100
+    )
+
+    @model_validator(mode="after")
+    def validate_preferences(self):
+        if self.lowTemp >= self.highTemp:
+            raise ValueError(
+                "Minimum temperature must be "
+                "lower than maximum temperature"
+            )
+
+        if self.nightStart == self.nightEnd:
+            raise ValueError(
+                "Night start and end times must differ"
+            )
+
+        self.residentName = self.residentName.strip()
+
+        if not self.residentName:
+            raise ValueError(
+                "Resident display name cannot be blank"
+            )
+
+        return self
 
 
 # ---------- alarms ----------

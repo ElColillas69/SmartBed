@@ -123,19 +123,59 @@ def test_alarm_crud_and_ownership(client):
     assert client.get(f"/api/beds/{maureen}/alarms", headers=h).json() == []
 
 
+
 def test_nights_summary(client):
-    from datetime import timedelta
-    from app.models import now_utc
+    from datetime import datetime, time, timedelta, timezone
+    from zoneinfo import ZoneInfo
+
     h = login(client)
     bed_id = claim(client, h)
-    start = now_utc() - timedelta(hours=2)
+
+    # Use yesterday at 8 PM Dublin time.
+    # This ensures all test readings belong to
+    # the same noon-to-noon sleep period.
+    local_tz = ZoneInfo("Europe/Dublin")
+
+    yesterday = (
+        datetime.now(local_tz).date()
+        - timedelta(days=1)
+    )
+
+    start = datetime.combine(
+        yesterday,
+        time(20, 0),
+        tzinfo=local_tz
+    ).astimezone(timezone.utc)
+
+    # Generate two hours of readings with one bed exit.
     with SessionLocal() as db:
-        for i in range(24):                              # 2 hours, one exit in the middle
-            save_reading(db, "pi-maureen", reading(occupied=not 10 <= i < 12,
-                                                    recorded_at=start + timedelta(minutes=5 * i)))
-    nights = client.get(f"/api/beds/{bed_id}/sleep/nights", headers=h).json()
-    assert len(nights) == 1 and nights[0]["bed_exits"] == 1
-    assert nights[0]["avg_humidity_percent"] == 50     # used by the weekly report
+        for i in range(24):
+            save_reading(
+                db,
+                "pi-maureen",
+                reading(
+                    occupied=not (10 <= i < 12),
+                    recorded_at=start + timedelta(minutes=5 * i)
+                )
+            )
+
+    response = client.get(
+        f"/api/beds/{bed_id}/sleep/nights",
+        headers=h
+    )
+
+    assert response.status_code == 200
+
+    nights = response.json()
+
+    # All readings must belong to one sleep night.
+    assert len(nights) == 1
+
+    # Verify exactly one bed exit.
+    assert nights[0]["bed_exits"] == 1
+
+    # Verify average humidity for the weekly report.
+    assert nights[0]["avg_humidity_percent"] == 50
 
 
 def test_claim_with_generated_code(client):

@@ -11,6 +11,7 @@ import { useBed } from '../lib/BedData'
 import { getDashboardSummary } from '../lib/dashboardSummary'
 import './DashboardOverview.css'
 import SleepInsightsPanel from './SleepInsightsPanel'
+import SleepBadgesPanel from './SleepBadgesPanel'
 
 export default function DashboardOverview() {
     const {
@@ -167,6 +168,7 @@ export default function DashboardOverview() {
                 measured sleep duration.
             </p>
             <SleepInsightsPanel nights={nights?.data} care={care} compact />
+            <SleepBadgesPanel nights={nights?.data} care={care} compact />
         </section>
     )
 }

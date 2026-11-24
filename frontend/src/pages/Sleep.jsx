@@ -5,6 +5,7 @@ import NoData from './NoData'
 import { NightsTabs } from './WeekReport'
 import SleepQualityPanel from '../components/SleepQualityPanel'
 import SleepInsightsPanel from '../components/SleepInsightsPanel'
+import SleepBadgesPanel from '../components/SleepBadgesPanel'
 
 function averageClock(dates) {
   if (!dates.length) return null
@@ -38,6 +39,11 @@ export default function Sleep() {
 
       <SleepQualityPanel nights={nights.data} care={care} />
       <SleepInsightsPanel
+        nights={nights.data}
+        care={care}
+      />
+
+      <SleepBadgesPanel
         nights={nights.data}
         care={care}
       />

@@ -1,0 +1,371 @@
+/*
+ * SmartBed Comfort Overhaul — Commit 6
+ * Badge rewards and achievement progress.
+ */
+
+.sleep-badges {
+    margin: 30px 0;
+    padding: clamp(20px, 3vw, 30px);
+
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 22px;
+
+    box-shadow: var(--comfort-shadow);
+}
+
+/* Header */
+
+.sleep-badges__heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+
+    margin-bottom: 22px;
+}
+
+.sleep-badges__eyebrow {
+    margin: 0 0 6px;
+
+    color: var(--ink-2);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+
+.sleep-badges__heading h2 {
+    margin: 0;
+
+    color: var(--ink);
+    font-size: clamp(23px, 2.8vw, 31px);
+    line-height: 1.25;
+}
+
+.sleep-badges__heading p:last-child {
+    margin: 9px 0 0;
+
+    color: var(--ink-2);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.sleep-badges__heading-icon {
+    flex: none;
+
+    display: grid;
+    place-items: center;
+
+    width: 48px;
+    height: 48px;
+
+    border-radius: 16px;
+    background: var(--amber-wash);
+    color: var(--amber);
+}
+
+/* Unlock summary */
+
+.sleep-badges__summary {
+    padding: 17px 20px;
+
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 15px;
+}
+
+.sleep-badges__summary>div:first-child {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 9px;
+}
+
+.sleep-badges__summary strong {
+    color: var(--ink);
+    font-size: 29px;
+    line-height: 1;
+}
+
+.sleep-badges__summary span {
+    color: var(--ink-2);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.sleep-badges__summary-track {
+    margin-top: 13px;
+}
+
+.sleep-badges progress {
+    display: block;
+    width: 100%;
+    height: 10px;
+
+    appearance: none;
+    border: 0;
+    border-radius: 999px;
+    overflow: hidden;
+
+    accent-color: var(--amber);
+    background: var(--paper-3);
+}
+
+.sleep-badges progress::-webkit-progress-bar {
+    background: var(--paper-3);
+    border-radius: 999px;
+}
+
+.sleep-badges progress::-webkit-progress-value {
+    background: var(--amber);
+    border-radius: 999px;
+}
+
+.sleep-badges progress::-moz-progress-bar {
+    background: var(--amber);
+    border-radius: 999px;
+}
+
+.sleep-badges__encouragement {
+    margin: 14px 2px 22px;
+
+    color: var(--ink-2);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Badge gallery */
+
+.sleep-badges__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+}
+
+.sleep-badge {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 20px;
+
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 18px;
+
+    transition:
+        transform 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.sleep-badge:hover,
+.sleep-badge:focus-within {
+    transform: translateY(-3px);
+    border-color: var(--rule-strong);
+    box-shadow: var(--comfort-hover-shadow);
+}
+
+.sleep-badge--earned {
+    background: var(--amber-wash);
+    border-color: var(--amber);
+}
+
+.sleep-badge--locked {
+    background: var(--paper-2);
+}
+
+/* Icon and status */
+
+.sleep-badge__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+
+    margin-bottom: 19px;
+}
+
+.sleep-badge__icon {
+    display: grid;
+    place-items: center;
+
+    width: 54px;
+    height: 54px;
+
+    border-radius: 18px;
+
+    background: var(--paper-3);
+    color: var(--ink-2);
+}
+
+.sleep-badge--earned .sleep-badge__icon {
+    background: var(--amber-wash);
+    color: var(--amber);
+}
+
+.sleep-badge__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+
+    padding: 6px 9px;
+
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.sleep-badge__status.is-earned {
+    color: var(--sage);
+    background: var(--band);
+}
+
+.sleep-badge__status.is-locked {
+    color: var(--ink-2);
+    background: var(--paper-3);
+}
+
+/* Badge information */
+
+.sleep-badge h3 {
+    margin: 0 0 7px;
+
+    color: var(--ink);
+    font-size: 18px;
+    line-height: 1.3;
+}
+
+.sleep-badge__description {
+    margin: 0 0 22px;
+
+    color: var(--ink-2);
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+.sleep-badge__progress-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+
+    margin-top: auto;
+    margin-bottom: 9px;
+
+    color: var(--ink-2);
+    font-size: 12px;
+}
+
+.sleep-badge__progress-heading strong {
+    color: var(--ink);
+    font-size: 14px;
+}
+
+.sleep-badge__progress-text {
+    margin: 9px 0 0;
+
+    color: var(--ink-2);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* Expandable explanations */
+
+.sleep-badge__details {
+    margin-top: 17px;
+    padding-top: 13px;
+
+    border-top: 1px solid var(--rule);
+}
+
+.sleep-badge__details summary {
+    color: var(--ink);
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.sleep-badge__details summary:hover {
+    text-decoration: underline;
+}
+
+.sleep-badge__details p {
+    margin: 10px 0 0;
+
+    color: var(--ink-2);
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+/* Navigation and explanation */
+
+.sleep-badges__view-all {
+    display: inline-flex;
+
+    margin-top: 18px;
+
+    color: var(--sage);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.sleep-badges__view-all:hover {
+    color: var(--ink);
+}
+
+.sleep-badges__disclaimer {
+    margin: 21px 0 0;
+
+    color: var(--ink-2);
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+/* Tablet */
+
+@media (max-width: 1000px) {
+    .sleep-badges__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Mobile */
+
+@media (max-width: 620px) {
+    .sleep-badges {
+        padding: 18px;
+    }
+
+    .sleep-badges__grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .sleep-badge {
+        padding: 18px;
+    }
+
+    .sleep-badge__top {
+        margin-bottom: 14px;
+    }
+}
+
+/* Accessible animation preferences */
+
+@media (prefers-reduced-motion: reduce) {
+    .sleep-badge {
+        transition: none;
+    }
+
+    .sleep-badge:hover,
+    .sleep-badge:focus-within {
+        transform: none;
+    }
+}

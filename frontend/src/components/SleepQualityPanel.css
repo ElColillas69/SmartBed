@@ -1,0 +1,325 @@
+/*
+ * SmartBed Comfort UI — Commit 4
+ * Sleep-quality indicators and explanations.
+ * Uses the existing day/night colour tokens.
+ */
+
+.sleep-quality {
+    margin: 28px 0 36px;
+}
+
+/* Section heading */
+
+.sleep-quality__header {
+    margin-bottom: 20px;
+}
+
+.sleep-quality__eyebrow {
+    margin: 0 0 6px;
+    color: var(--ink-2);
+
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+}
+
+.sleep-quality__header h2 {
+    margin: 0;
+
+    color: var(--ink);
+    font-size: clamp(24px, 3vw, 33px);
+    line-height: 1.25;
+    letter-spacing: -0.025em;
+}
+
+.sleep-quality__header p:last-child {
+    margin: 8px 0 0;
+
+    color: var(--ink-2);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* Summary cards */
+
+.sleep-quality__totals {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+}
+
+.sleep-quality__total {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+
+    min-width: 0;
+    padding: 23px;
+
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 20px;
+
+    box-shadow: var(--comfort-shadow);
+}
+
+.sleep-quality__total svg {
+    flex: none;
+}
+
+.sleep-quality__total strong {
+    font-size: 39px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.sleep-quality__total span {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+/* Good: green */
+
+.sleep-quality__total--good {
+    color: var(--sage);
+    border-top: 4px solid var(--sage);
+}
+
+/* Needs attention: red */
+
+.sleep-quality__total--poor {
+    color: var(--red);
+    border-top: 4px solid var(--red);
+}
+
+/* Unrated: neutral */
+
+.sleep-quality__total--unrated {
+    color: var(--ink-2);
+    border-top: 4px solid var(--rule-strong);
+}
+
+.sleep-quality__context {
+    margin: 12px 2px 0;
+
+    color: var(--ink-2);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Night-by-night list */
+
+.sleep-quality__history {
+    margin-top: 30px;
+}
+
+.sleep-quality__history h3 {
+    margin: 0 0 16px;
+
+    color: var(--ink);
+    font-size: 21px;
+}
+
+.sleep-quality__night-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.sleep-quality__night {
+    min-width: 0;
+    padding: 20px;
+
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 17px;
+
+    box-shadow: var(--comfort-shadow);
+
+    transition:
+        transform 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+.sleep-quality__night:hover {
+    transform: translateY(-2px);
+    border-color: var(--rule-strong);
+    box-shadow: var(--comfort-hover-shadow);
+}
+
+.sleep-quality__night--good {
+    border-left: 4px solid var(--sage);
+}
+
+.sleep-quality__night--poor {
+    border-left: 4px solid var(--red);
+}
+
+.sleep-quality__night--unrated {
+    border-left: 4px solid var(--rule-strong);
+}
+
+.sleep-quality__night-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.sleep-quality__night-top h4 {
+    margin: 0 0 7px;
+
+    color: var(--ink);
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.sleep-quality__night-top p,
+.sleep-quality__exits {
+    margin: 0;
+    color: var(--ink-2);
+
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.sleep-quality__exits {
+    margin-top: 12px;
+}
+
+/* Individual rating pills */
+
+.sleep-quality__rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 8px 11px;
+
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+
+    white-space: nowrap;
+}
+
+.sleep-quality__rating--good {
+    background: var(--band);
+    color: var(--sage);
+}
+
+.sleep-quality__rating--poor {
+    background: var(--red-wash);
+    color: var(--red);
+}
+
+.sleep-quality__rating--unrated {
+    background: var(--paper-2);
+    color: var(--ink-2);
+}
+
+/* Expandable explanation */
+
+.sleep-quality__details {
+    margin-top: 16px;
+    padding-top: 13px;
+
+    border-top: 1px solid var(--rule);
+}
+
+.sleep-quality__details summary {
+    display: list-item;
+
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.sleep-quality__details summary:hover {
+    text-decoration: underline;
+}
+
+.sleep-quality__details ul {
+    margin: 12px 0 0;
+    padding-left: 19px;
+
+    color: var(--ink-2);
+    font-size: 13px;
+    line-height: 1.65;
+}
+
+.sleep-quality__details li+li {
+    margin-top: 7px;
+}
+
+.sleep-quality__empty,
+.sleep-quality__disclaimer {
+    color: var(--ink-2);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.sleep-quality__disclaimer {
+    margin: 20px 2px 0;
+}
+
+/* Tablet */
+
+@media (max-width: 900px) {
+    .sleep-quality__totals {
+        gap: 10px;
+    }
+
+    .sleep-quality__total {
+        padding: 17px;
+    }
+}
+
+/* Mobile */
+
+@media (max-width: 650px) {
+    .sleep-quality__totals {
+        grid-template-columns: 1fr;
+    }
+
+    .sleep-quality__total {
+        display: grid;
+        grid-template-columns: 32px auto;
+        align-items: center;
+        column-gap: 13px;
+        row-gap: 3px;
+    }
+
+    .sleep-quality__total svg {
+        grid-row: span 2;
+    }
+
+    .sleep-quality__total strong {
+        font-size: 29px;
+    }
+
+    .sleep-quality__night-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sleep-quality__night {
+        padding: 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sleep-quality__night {
+        transition: none;
+    }
+
+    .sleep-quality__night:hover {
+        transform: none;
+    }
+}

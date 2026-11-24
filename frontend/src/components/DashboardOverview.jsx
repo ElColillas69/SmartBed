@@ -10,6 +10,7 @@ import {
 import { useBed } from '../lib/BedData'
 import { getDashboardSummary } from '../lib/dashboardSummary'
 import './DashboardOverview.css'
+import SleepInsightsPanel from './SleepInsightsPanel'
 
 export default function DashboardOverview() {
     const {
@@ -165,6 +166,7 @@ export default function DashboardOverview() {
                 information. Time in bed is not the same as
                 measured sleep duration.
             </p>
+            <SleepInsightsPanel nights={nights?.data} care={care} compact />
         </section>
     )
 }

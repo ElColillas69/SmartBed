@@ -4,6 +4,7 @@ import { clock, duration, nightLabel, parseTime } from '../lib/time'
 import NoData from './NoData'
 import { NightsTabs } from './WeekReport'
 import SleepQualityPanel from '../components/SleepQualityPanel'
+import SleepInsightsPanel from '../components/SleepInsightsPanel'
 
 function averageClock(dates) {
   if (!dates.length) return null
@@ -36,6 +37,10 @@ export default function Sleep() {
       <PageHead kicker={`Goal ${duration(goal)} a night`} title={`The last ${list.length} nights`} />
 
       <SleepQualityPanel nights={nights.data} care={care} />
+      <SleepInsightsPanel
+        nights={nights.data}
+        care={care}
+      />
       <dl className="facts summary">
         <div><dt>Average in bed</dt><dd>{duration(avg)}</dd><p>{metGoal} of {done.length} nights hit the goal</p></div>
         <div><dt>Usual bedtime</dt><dd>{averageClock(done.map((n) => parseTime(n.bedtime))) ?? '—'}</dd><p>up around {averageClock(done.map((n) => parseTime(n.wake))) ?? '—'}</p></div>

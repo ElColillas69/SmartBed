@@ -11,6 +11,7 @@ import Sleep from './pages/Sleep'
 import WeekReport from './pages/WeekReport'
 import Alarms from './pages/Alarms'
 import Settings from './pages/Settings'
+import { getMonitoringStatus } from './lib/monitorStatus'
 
 const NAV = [
   { to: '/', label: 'Now', icon: BedDouble },
@@ -21,14 +22,36 @@ const NAV = [
 
 // "Bed online" only when the server answers AND the bed's device sent a reading
 // recently. Reaching the server alone doesn't mean the Pi is on.
+
 function Connection() {
-  const { connected, live } = useBed()
-  const latest = live.data?.latest
-  const fresh = connected && latest && !isStale(latest)
-  const state = fresh ? 'ok' : connected ? 'stale' : live.loading ? 'wait' : 'down'
-  const text = { ok: 'Bed online', stale: 'No recent readings', wait: 'Connecting…', down: 'Server offline' }
-  return <span className={`conn ${state}`}>{text[state]}</span>
+  const { live } = useBed()
+  const status = getMonitoringStatus(live)
+
+  return (
+    <div className="monitor-connection">
+      <span
+        className={`conn ${status.kind}`}
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {status.label}
+        <span className="sr-only">
+          . {status.detail}
+        </span>
+      </span>
+
+      <button
+        type="button"
+        className="btn ghost sm monitor-refresh"
+        onClick={() => void live.refresh()}
+      >
+        Refresh readings
+      </button>
+    </div>
+  )
 }
+
 
 // Shows whose room this is; a dropdown when the account can see several beds.
 function BedSwitcher() {
@@ -52,6 +75,10 @@ export default function App() {
 
   return (
     <div className="app">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+
       <header className="topbar">
         <NavLink to="/" className="brand"><BedMark /><span>smartbed</span></NavLink>
         <BedSwitcher />
@@ -70,7 +97,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="main">
+      <main id="main-content" className="main" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Tonight />} />
           <Route path="/sleep" element={<Sleep />} />
@@ -90,7 +117,17 @@ export default function App() {
         ))}
       </nav>
 
-      {toast && <div key={toast.id} className={`toast ${toast.kind === 'error' ? 'error' : ''}`} role="status">{toast.message}</div>}
+
+      {toast && (
+        <div
+          key={toast.id}
+          className={`toast ${toast.kind === 'error' ? 'error' : ''}`}
+          role={toast.kind === 'error' ? 'alert' : 'status'}
+        >
+          {toast.message}
+        </div>
+      )}
+
     </div>
   )
 }
